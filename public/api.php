@@ -11,66 +11,36 @@ ob_start();
 header("Content-Type: application/json; charset=utf-8");
 
 // CORS: Get the origin making the request
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
 
-// CORS: Define allowed origins
-$allowed_origins = [
-    // Local development
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:8000',
-    'http://localhost:8080',
-    'http://localhost:5173',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    'http://127.0.0.1:8000',
-    'http://127.0.0.1:8080',
-    'http://127.0.0.1:5173',
-    'https://localhost:3000',
-    'https://localhost:3001',
-    'https://localhost:5173',
-    'https://127.0.0.1:3000',
-    'https://127.0.0.1:3001',
-    'https://127.0.0.1:5173',
-    // Self-same origin and known domains
-    'https://med.wayrus.co.ke',
-    'http://med.wayrus.co.ke',
-    'https://dev.wayrus.co.ke',
-    'http://dev.wayrus.co.ke',
-];
+// CORS: For development, allow all origins (simplest approach)
+// For production, you can restrict to specific domains via environment variable
+$allow_all_origins = true;
 
-// CORS: Check if origin is allowed
-$is_allowed_origin = in_array($origin, $allowed_origins);
-
-// CORS: Also check environment variable whitelist
-if (!$is_allowed_origin && !empty($origin)) {
-    $allowed_domains = explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: '');
-    $allowed_domains = array_map('trim', $allowed_domains);
-    $is_allowed_origin = in_array($origin, $allowed_domains);
-}
-
-// CORS: Allow all preview/cloud domains (fly.dev, vercel, netlify) and localhost
-if (!$is_allowed_origin && !empty($origin)) {
-    // localhost variants
-    if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1):/i', $origin)) {
-        $is_allowed_origin = true;
+if ($allow_all_origins) {
+    // Development: Allow all origins
+    if (!empty($_SERVER['HTTP_ORIGIN'])) {
+        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+        header("Access-Control-Allow-Credentials: true");
+    } else {
+        header("Access-Control-Allow-Origin: *");
     }
-    // Cloud/preview domains: fly.dev, vercel.app, netlify.app
-    if (preg_match('/\.fly\.dev$|\.vercel\.app$|\.netlify\.app$|localhost/i', $origin)) {
-        $is_allowed_origin = true;
-    }
-}
-
-// CORS: Set response headers with allowed origin
-if ($is_allowed_origin && !empty($origin)) {
-    header("Access-Control-Allow-Origin: {$origin}");
-    header("Access-Control-Allow-Credentials: true");
-} else if (!empty($origin)) {
-    // Still send CORS header even for non-allowed origins (browser will block)
-    header("Access-Control-Allow-Origin: {$origin}");
 } else {
-    // No origin sent - allow all (direct requests)
-    header("Access-Control-Allow-Origin: *");
+    // Production: Restrict to specific domains (if needed)
+    $allowed_origins = [
+        'https://med.wayrus.co.ke',
+        'http://med.wayrus.co.ke',
+        'https://dev.wayrus.co.ke',
+        'http://dev.wayrus.co.ke',
+    ];
+    $is_allowed_origin = in_array($_SERVER['HTTP_ORIGIN'] ?? '', $allowed_origins);
+
+    if ($is_allowed_origin && !empty($_SERVER['HTTP_ORIGIN'])) {
+        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+        header("Access-Control-Allow-Credentials: true");
+    } else {
+        header("Access-Control-Allow-Origin: *");
+    }
 }
 
 // CORS: Set additional headers for all requests
