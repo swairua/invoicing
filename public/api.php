@@ -102,6 +102,9 @@ if (in_array($request_method, ['POST', 'PUT', 'PATCH'])) {
         $raw_input = file_get_contents('php://input');
         if ($raw_input) {
             $json_body = json_decode($raw_input, true);
+            if ($json_body === null && json_last_error() !== JSON_ERROR_NONE) {
+                error_log("❌ [JSON] Failed to decode JSON body: " . json_last_error_msg());
+            }
         }
     }
 }
@@ -1059,7 +1062,8 @@ try {
 
     // Authentication
     if ($action === "login") {
-        error_log("[LOGIN] 🔐 Login request received");
+        $client_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        error_log("[LOGIN] 🔐 Login request received from IP: $client_ip");
         error_log("[LOGIN] Request method: " . $_SERVER['REQUEST_METHOD']);
         error_log("[LOGIN] Request origin: " . ($_SERVER['HTTP_ORIGIN'] ?? 'none'));
 
@@ -1070,7 +1074,7 @@ try {
         error_log("[LOGIN] Password provided: " . ($password ? 'yes (length: ' . strlen($password) . ')' : 'no'));
 
         if (!$email || !$password) {
-            error_log("[LOGIN] ❌ Missing email or password");
+            error_log("[LOGIN] ❌ Missing email or password from IP: $client_ip");
             throw new Exception("Missing email or password");
         }
 
@@ -1082,8 +1086,14 @@ try {
 
         $result = $conn->query($sql);
 
-        if (!$result || $result->num_rows === 0) {
-            error_log("[LOGIN] ❌ User not found in database");
+        if (!$result) {
+            error_log("[LOGIN] ❌ Database error during login: " . $conn->error);
+            http_response_code(500);
+            throw new Exception("Database error occurred during login");
+        }
+
+        if ($result->num_rows === 0) {
+            error_log("[LOGIN] ❌ User not found in database: " . $email);
             http_response_code(401);
             throw new Exception("Invalid email or password");
         }
@@ -1100,7 +1110,7 @@ try {
                         ($user['password'] === $password); // Raw password fallback
 
         if (!$passwordMatch) {
-            error_log("[LOGIN] ❌ Password verification failed");
+            error_log("[LOGIN] ❌ Password verification failed for user: " . $email);
             http_response_code(401);
             throw new Exception("Invalid email or password");
         }
@@ -1129,7 +1139,7 @@ try {
         error_log("[LOGIN] ✅ JWT token created successfully");
         error_log("[LOGIN] Token length: " . strlen($token));
 
-        error_log("[LOGIN] ✅ LOGIN SUCCESSFUL - User: $email, ID: " . $user['id']);
+        error_log("[LOGIN] ✅ LOGIN SUCCESSFUL - User: $email, ID: " . $user['id'] . " from IP: $client_ip");
 
         echo json_encode([
             'status' => 'success',

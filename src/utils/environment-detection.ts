@@ -143,23 +143,11 @@ function getAPIBaseURLInternal(): string {
     return localUrl;
   }
 
-  // Cloud hostname in development mode: require explicit env var
-  const errorMsg = `
-🚨 Development mode with cloud hostname (${hostname}) detected!
-
-To fix this, you have two options:
-
-Option A (Recommended): Set the API URL when building for production
-  VITE_EXTERNAL_API_URL=https://your-domain.com npm run build
-  Then the app will use relative /api.php when deployed.
-
-Option B: Set VITE_EXTERNAL_API_URL in .env file or when running dev server
-  VITE_EXTERNAL_API_URL=https://api.example.com npm run dev
-
-For local development: Use localhost or a private IP (192.168.x.x, 10.x.x.x, etc)
-  `;
-  console.error('[ENV_DETECT] ❌ Error:', errorMsg);
-  throw new Error(errorMsg);
+  // Cloud hostname in development mode: use relative /api.php as a fallback
+  // This allows the Vite proxy to handle the request, which is often what's intended
+  // in preview/cloud development environments where a proxy is configured.
+  console.warn('[ENV_DETECT] ⚠️  Cloud hostname in development mode - falling back to relative /api.php');
+  return '/api.php';
 }
 
 /**
