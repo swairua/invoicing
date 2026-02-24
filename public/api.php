@@ -12,6 +12,9 @@ header("Content-Type: application/json; charset=utf-8");
 
 // CORS: Get the origin making the request
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+error_log("[CORS] Request received - Origin: " . ($origin ?: 'none'));
+error_log("[CORS] Request method: " . $_SERVER['REQUEST_METHOD']);
+error_log("[CORS] Request URL: " . $_SERVER['REQUEST_URI']);
 
 // CORS: For development, allow all origins (simplest approach)
 // For production, you can restrict to specific domains via environment variable
@@ -22,8 +25,11 @@ if ($allow_all_origins) {
     if (!empty($_SERVER['HTTP_ORIGIN'])) {
         header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
         header("Access-Control-Allow-Credentials: true");
+        error_log("[CORS] ✅ Set Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+        error_log("[CORS] ✅ Set Access-Control-Allow-Credentials: true");
     } else {
         header("Access-Control-Allow-Origin: *");
+        error_log("[CORS] ✅ Set Access-Control-Allow-Origin: *");
     }
 }
 
@@ -32,6 +38,7 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HE
 header("Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-Token, X-API-Key, Accept-Language, Content-Language");
 header("Access-Control-Max-Age: 86400");
 header("Access-Control-Expose-Headers: Content-Type, X-Total-Count, X-Page, X-Page-Size, X-Request-Id, Content-Length, Authorization");
+error_log("[CORS] ✅ Set additional CORS headers (Methods, Headers, Max-Age, Expose-Headers)");
 
 // Cache control
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -40,6 +47,7 @@ header("Expires: 0");
 
 // CORS: Handle OPTIONS preflight requests - respond immediately
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    error_log("[CORS] 📋 OPTIONS preflight request received - responding with 200");
     http_response_code(200);
     ob_end_clean();
     exit(0);
