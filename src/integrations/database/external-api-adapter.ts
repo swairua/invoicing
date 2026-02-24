@@ -37,8 +37,7 @@ export class ExternalAPIAdapter implements IDatabase {
 
       this.apiBase = this.externalApiUrl;
 
-      console.log('✅ Using external API at https://med.wayrus.co.ke/api.php');
-      console.log('📡 API endpoint:', this.apiBase);
+      console.log('📡 API endpoint configured:', this.apiBase);
 
       // NOTE: We no longer cache the token on construction.
       // This prevents timing/initialization issues where the adapter
