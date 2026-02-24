@@ -102,6 +102,9 @@ if (in_array($request_method, ['POST', 'PUT', 'PATCH'])) {
         $raw_input = file_get_contents('php://input');
         if ($raw_input) {
             $json_body = json_decode($raw_input, true);
+            if ($json_body === null && json_last_error() !== JSON_ERROR_NONE) {
+                error_log("❌ [JSON] Failed to decode JSON body: " . json_last_error_msg());
+            }
         }
     }
 }
@@ -1071,7 +1074,6 @@ try {
         error_log("[LOGIN] Password provided: " . ($password ? 'yes (length: ' . strlen($password) . ')' : 'no'));
 
         if (!$email || !$password) {
-            $client_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
             error_log("[LOGIN] ❌ Missing email or password from IP: $client_ip");
             throw new Exception("Missing email or password");
         }
@@ -1137,7 +1139,6 @@ try {
         error_log("[LOGIN] ✅ JWT token created successfully");
         error_log("[LOGIN] Token length: " . strlen($token));
 
-        $client_ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         error_log("[LOGIN] ✅ LOGIN SUCCESSFUL - User: $email, ID: " . $user['id'] . " from IP: $client_ip");
 
         echo json_encode([
