@@ -1,101 +1,7 @@
-<?php
+<?php ob_start(); header("Content-Type: application/json; charset=utf-8"); header("Access-Control-Allow-Origin: *"); header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"); header("Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-Token, X-API-Key, Accept-Language, Content-Language"); header("Access-Control-Max-Age: 86400"); header("Access-Control-Expose-Headers: Content-Type, X-Total-Count, X-Page, X-Page-Size, X-Request-Id, Content-Length, Authorization"); header("Cache-Control: no-cache, no-store, must-revalidate"); header("Pragma: no-cache"); header("Expires: 0"); error_log("[CORS-DEBUG] Headers set - Origin: " . ($_SERVER['HTTP_ORIGIN'] ?? 'none') . " | Method: " . $_SERVER['REQUEST_METHOD']); if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { error_log("[CORS-DEBUG] OPTIONS request - responding 200"); http_response_code(200); ob_end_clean(); exit(0); }
 // ═══════════════════════════════════════════════════════════════════════════════
-// CORS headers MUST be set IMMEDIATELY, before any output or logging
-// This ensures CORS headers are sent in all responses, including error responses
-//
-// CORS Configuration:
-// - Development: Allows localhost:3000-8080, localhost:5173 (Vite), and other dev ports
-// - Production: Set CORS_ALLOWED_ORIGINS environment variable with comma-separated domains
-// - Example: CORS_ALLOWED_ORIGINS="https://yoursite.com,https://app.yoursite.com"
-// - Debug Mode: Set APP_ENV=development or DEBUG=1 to allow all localhost origins
+// CORS HEADERS SET ABOVE - DB Config and business logic follows
 // ═══════════════════════════════════════════════════════════════════════════════
-
-// Output buffering ensures headers can be sent even if content is already output
-// This is critical for CORS headers to work in all error scenarios
-ob_start();
-
-// Always set response Content-Type to JSON first
-header("Content-Type: application/json; charset=utf-8");
-
-// Determine allowed origin
-// Allow localhost, 127.0.0.1, and any subdomain patterns needed for development
-$allowed_origins = [
-    // Local development
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:8000',
-    'http://localhost:8080',
-    'http://localhost:5173',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    'http://127.0.0.1:8000',
-    'http://127.0.0.1:8080',
-    'http://127.0.0.1:5173',
-    'https://localhost:3000',
-    'https://localhost:3001',
-    'https://localhost:5173',
-    'https://127.0.0.1:3000',
-    'https://127.0.0.1:3001',
-    'https://127.0.0.1:5173',
-    // Self-same origin
-    'https://med.wayrus.co.ke',
-    'http://med.wayrus.co.ke',
-];
-
-// Get origin from request
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-$is_allowed_origin = in_array($origin, $allowed_origins);
-
-// For production, also allow specific domains from environment variables
-if (!$is_allowed_origin && !empty($origin)) {
-    $allowed_domains = explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: '');
-    $allowed_domains = array_map('trim', $allowed_domains);
-    $is_allowed_origin = in_array($origin, $allowed_domains);
-}
-
-// In development mode, allow any localhost/127.0.0.1 origin
-if (!$is_allowed_origin && !empty($origin)) {
-    // Check if it's a development environment
-    $is_dev = getenv('APP_ENV') === 'development' || getenv('APP_ENV') === 'dev' || getenv('DEBUG') === '1';
-    if ($is_dev) {
-        // Allow any localhost variant
-        if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1):/i', $origin)) {
-            $is_allowed_origin = true;
-        }
-        // Allow any fly.dev or similar preview domains
-        if (preg_match('/\.fly\.dev$|\.vercel\.app$|\.netlify\.app$|localhost/i', $origin)) {
-            $is_allowed_origin = true;
-        }
-    }
-}
-
-// Set CORS response headers - allow credentials with specific origin (not wildcard)
-// Note: Cannot use wildcard (*) with credentials=true; must specify exact origin
-if ($is_allowed_origin && !empty($origin)) {
-    header("Access-Control-Allow-Origin: {$origin}");
-    header("Access-Control-Allow-Credentials: true");
-} else if (!empty($origin)) {
-    // Origin not in whitelist, but still send CORS header to indicate we support CORS
-    // Browser will block the response if origin is not allowed
-    header("Access-Control-Allow-Origin: {$origin}");
-} else {
-    // If no origin header sent (direct server requests), allow all
-    header("Access-Control-Allow-Origin: *");
-}
-
-// Set additional CORS headers for all requests
-// Include more headers for better compatibility with different clients
-header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD");
-header("Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-Token, X-API-Key, Accept-Language, Content-Language");
-header("Access-Control-Max-Age: 86400");
-header("Access-Control-Expose-Headers: Content-Type, X-Total-Count, X-Page, X-Page-Size, X-Request-Id, Content-Length, Authorization");
-
-// Prevent caching of API responses by default
-header("Cache-Control: no-cache, no-store, must-revalidate");
-header("Pragma: no-cache");
-header("Expires: 0");
-
-// ENDPOINT IDENTIFIER - Removed redundant endpoint logging (cleanup)
 
 // Set error handler to catch any errors and ensure CORS headers are sent
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
@@ -114,15 +20,6 @@ set_exception_handler(function($exception) {
     ]);
     exit();
 });
-
-// Handle CORS preflight requests (OPTIONS) - respond immediately
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    // All CORS headers are already set above
-    // No content needed for OPTIONS response
-    ob_end_clean();
-    exit(0);
-}
 
 // Configuration Variables - med.wayrus.co.ke
 // JWT Configuration
@@ -1162,35 +1059,56 @@ try {
 
     // Authentication
     if ($action === "login") {
+        error_log("[LOGIN] 🔐 Login request received");
+        error_log("[LOGIN] Request method: " . $_SERVER['REQUEST_METHOD']);
+        error_log("[LOGIN] Request origin: " . ($_SERVER['HTTP_ORIGIN'] ?? 'none'));
+
         $email = $_POST['email'] ?? ($json_body['email'] ?? null);
         $password = $_POST['password'] ?? ($json_body['password'] ?? null);
 
+        error_log("[LOGIN] Email provided: " . ($email ? 'yes' : 'no'));
+        error_log("[LOGIN] Password provided: " . ($password ? 'yes (length: ' . strlen($password) . ')' : 'no'));
+
         if (!$email || !$password) {
+            error_log("[LOGIN] ❌ Missing email or password");
             throw new Exception("Missing email or password");
         }
 
         $email = escape($conn, $email);
+        error_log("[LOGIN] Escaped email: $email");
+
         $sql = "SELECT id, email, password, role FROM users WHERE email = '$email' LIMIT 1";
+        error_log("[LOGIN] Executing query: $sql");
+
         $result = $conn->query($sql);
 
         if (!$result || $result->num_rows === 0) {
+            error_log("[LOGIN] ❌ User not found in database");
             http_response_code(401);
             throw new Exception("Invalid email or password");
         }
 
+        error_log("[LOGIN] ✅ User found in database");
         $user = $result->fetch_assoc();
+        error_log("[LOGIN] User ID: " . $user['id']);
+        error_log("[LOGIN] User role: " . $user['role']);
 
         // Support both bcrypt and MD5 hashes for backwards compatibility
+        error_log("[LOGIN] Verifying password against stored hash...");
         $passwordMatch = verifyPassword($password, $user['password']) ||
                         ($user['password'] === md5($password)) ||
                         ($user['password'] === $password); // Raw password fallback
 
         if (!$passwordMatch) {
+            error_log("[LOGIN] ❌ Password verification failed");
             http_response_code(401);
             throw new Exception("Invalid email or password");
         }
 
+        error_log("[LOGIN] ✅ Password verified successfully");
+
         // Fetch full user profile including company_id and status
+        error_log("[LOGIN] Fetching user profile from profiles table...");
         $profile_sql = "SELECT id, email, role, status, company_id FROM profiles WHERE id = ? LIMIT 1";
         $profile_stmt = $conn->prepare($profile_sql);
         $profile_stmt->bind_param("s", $user['id']);
@@ -1199,8 +1117,19 @@ try {
         $profile = $profile_result->fetch_assoc();
         $profile_stmt->close();
 
+        if ($profile) {
+            error_log("[LOGIN] ✅ Profile found - Company ID: " . ($profile['company_id'] ?? 'null') . ", Status: " . $profile['status']);
+        } else {
+            error_log("[LOGIN] ⚠️  Profile not found, using defaults");
+        }
+
         // Create JWT token instead of session (include company_id and status)
+        error_log("[LOGIN] Creating JWT token...");
         $token = createJWT($user['id'], $user['email'], $user['role'], $profile ? $profile['company_id'] : null, $profile ? $profile['status'] : 'active');
+        error_log("[LOGIN] ✅ JWT token created successfully");
+        error_log("[LOGIN] Token length: " . strlen($token));
+
+        error_log("[LOGIN] ✅ LOGIN SUCCESSFUL - User: $email, ID: " . $user['id']);
 
         echo json_encode([
             'status' => 'success',
