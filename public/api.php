@@ -1,59 +1,7 @@
-<?php
+<?php ob_start(); header("Content-Type: application/json; charset=utf-8"); header("Access-Control-Allow-Origin: *"); header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"); header("Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-Token, X-API-Key, Accept-Language, Content-Language"); header("Access-Control-Max-Age: 86400"); header("Access-Control-Expose-Headers: Content-Type, X-Total-Count, X-Page, X-Page-Size, X-Request-Id, Content-Length, Authorization"); header("Cache-Control: no-cache, no-store, must-revalidate"); header("Pragma: no-cache"); header("Expires: 0"); error_log("[CORS-DEBUG] Headers set - Origin: " . ($_SERVER['HTTP_ORIGIN'] ?? 'none') . " | Method: " . $_SERVER['REQUEST_METHOD']); if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { error_log("[CORS-DEBUG] OPTIONS request - responding 200"); http_response_code(200); ob_end_clean(); exit(0); }
 // ═══════════════════════════════════════════════════════════════════════════════
-// CORS CONFIGURATION - SET IMMEDIATELY, BEFORE ANYTHING ELSE
-// This ensures CORS headers are sent in all responses, including error responses
+// CORS HEADERS SET ABOVE - DB Config and business logic follows
 // ═══════════════════════════════════════════════════════════════════════════════
-
-// Output buffering to ensure headers work properly
-ob_start();
-
-// Set Content-Type first
-header("Content-Type: application/json; charset=utf-8");
-
-// CORS: Get the origin making the request
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-error_log("[CORS] Request received - Origin: " . ($origin ?: 'none'));
-error_log("[CORS] Request method: " . $_SERVER['REQUEST_METHOD']);
-error_log("[CORS] Request URL: " . $_SERVER['REQUEST_URI']);
-
-// CORS: For development, allow all origins (simplest approach)
-// For production, you can restrict to specific domains via environment variable
-$allow_all_origins = true;
-
-if ($allow_all_origins) {
-    // Development: Allow all origins
-    if (!empty($_SERVER['HTTP_ORIGIN'])) {
-        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-        header("Access-Control-Allow-Credentials: true");
-        error_log("[CORS] ✅ Set Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-        error_log("[CORS] ✅ Set Access-Control-Allow-Credentials: true");
-    } else {
-        header("Access-Control-Allow-Origin: *");
-        error_log("[CORS] ✅ Set Access-Control-Allow-Origin: *");
-    }
-}
-
-// CORS: Set additional headers for all requests
-header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD");
-header("Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-Token, X-API-Key, Accept-Language, Content-Language");
-header("Access-Control-Max-Age: 86400");
-header("Access-Control-Expose-Headers: Content-Type, X-Total-Count, X-Page, X-Page-Size, X-Request-Id, Content-Length, Authorization");
-error_log("[CORS] ✅ Set additional CORS headers (Methods, Headers, Max-Age, Expose-Headers)");
-
-// Cache control
-header("Cache-Control: no-cache, no-store, must-revalidate");
-header("Pragma: no-cache");
-header("Expires: 0");
-
-// CORS: Handle OPTIONS preflight requests - respond immediately
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    error_log("[CORS] 📋 OPTIONS preflight request received - responding with 200");
-    http_response_code(200);
-    ob_end_clean();
-    exit(0);
-}
-
-// ENDPOINT IDENTIFIER - Removed redundant endpoint logging (cleanup)
 
 // Set error handler to catch any errors and ensure CORS headers are sent
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
