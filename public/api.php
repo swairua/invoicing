@@ -25,22 +25,6 @@ if ($allow_all_origins) {
     } else {
         header("Access-Control-Allow-Origin: *");
     }
-} else {
-    // Production: Restrict to specific domains (if needed)
-    $allowed_origins = [
-        'https://med.wayrus.co.ke',
-        'http://med.wayrus.co.ke',
-        'https://dev.wayrus.co.ke',
-        'http://dev.wayrus.co.ke',
-    ];
-    $is_allowed_origin = in_array($_SERVER['HTTP_ORIGIN'] ?? '', $allowed_origins);
-
-    if ($is_allowed_origin && !empty($_SERVER['HTTP_ORIGIN'])) {
-        header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
-        header("Access-Control-Allow-Credentials: true");
-    } else {
-        header("Access-Control-Allow-Origin: *");
-    }
 }
 
 // CORS: Set additional headers for all requests
