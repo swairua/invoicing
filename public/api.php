@@ -55,19 +55,15 @@ if (!$is_allowed_origin && !empty($origin)) {
     $is_allowed_origin = in_array($origin, $allowed_domains);
 }
 
-// In development mode, allow any localhost/127.0.0.1 origin
+// Allow preview/cloud domains and localhost regardless of environment
 if (!$is_allowed_origin && !empty($origin)) {
-    // Check if it's a development environment
-    $is_dev = getenv('APP_ENV') === 'development' || getenv('APP_ENV') === 'dev' || getenv('DEBUG') === '1';
-    if ($is_dev) {
-        // Allow any localhost variant
-        if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1):/i', $origin)) {
-            $is_allowed_origin = true;
-        }
-        // Allow any fly.dev or similar preview domains
-        if (preg_match('/\.fly\.dev$|\.vercel\.app$|\.netlify\.app$|localhost/i', $origin)) {
-            $is_allowed_origin = true;
-        }
+    // Allow any localhost variant
+    if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1):/i', $origin)) {
+        $is_allowed_origin = true;
+    }
+    // Allow any fly.dev, vercel.app, netlify.app, or similar preview domains
+    if (preg_match('/\.fly\.dev$|\.vercel\.app$|\.netlify\.app$|localhost/i', $origin)) {
+        $is_allowed_origin = true;
     }
 }
 
