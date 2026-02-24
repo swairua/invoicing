@@ -40,6 +40,8 @@ $allowed_origins = [
     // Self-same origin
     'https://med.wayrus.co.ke',
     'http://med.wayrus.co.ke',
+    'https://dev.wayrus.co.ke',
+    'http://dev.wayrus.co.ke',
 ];
 
 // Get origin from request
