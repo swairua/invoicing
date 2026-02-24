@@ -1,24 +1,19 @@
 <?php
 // ═══════════════════════════════════════════════════════════════════════════════
-// CORS headers MUST be set IMMEDIATELY, before any output or logging
+// CORS CONFIGURATION - SET IMMEDIATELY, BEFORE ANYTHING ELSE
 // This ensures CORS headers are sent in all responses, including error responses
-//
-// CORS Configuration:
-// - Development: Allows localhost:3000-8080, localhost:5173 (Vite), and other dev ports
-// - Production: Set CORS_ALLOWED_ORIGINS environment variable with comma-separated domains
-// - Example: CORS_ALLOWED_ORIGINS="https://yoursite.com,https://app.yoursite.com"
-// - Debug Mode: Set APP_ENV=development or DEBUG=1 to allow all localhost origins
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Output buffering ensures headers can be sent even if content is already output
-// This is critical for CORS headers to work in all error scenarios
+// Output buffering to ensure headers work properly
 ob_start();
 
-// Always set response Content-Type to JSON first
+// Set Content-Type first
 header("Content-Type: application/json; charset=utf-8");
 
-// Determine allowed origin
-// Allow localhost, 127.0.0.1, and any subdomain patterns needed for development
+// CORS: Get the origin making the request
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+// CORS: Define allowed origins
 $allowed_origins = [
     // Local development
     'http://localhost:3000',
@@ -37,61 +32,64 @@ $allowed_origins = [
     'https://127.0.0.1:3000',
     'https://127.0.0.1:3001',
     'https://127.0.0.1:5173',
-    // Self-same origin
+    // Self-same origin and known domains
     'https://med.wayrus.co.ke',
     'http://med.wayrus.co.ke',
     'https://dev.wayrus.co.ke',
     'http://dev.wayrus.co.ke',
 ];
 
-// Get origin from request
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+// CORS: Check if origin is allowed
 $is_allowed_origin = in_array($origin, $allowed_origins);
 
-// For production, also allow specific domains from environment variables
+// CORS: Also check environment variable whitelist
 if (!$is_allowed_origin && !empty($origin)) {
     $allowed_domains = explode(',', getenv('CORS_ALLOWED_ORIGINS') ?: '');
     $allowed_domains = array_map('trim', $allowed_domains);
     $is_allowed_origin = in_array($origin, $allowed_domains);
 }
 
-// Allow preview/cloud domains and localhost regardless of environment
+// CORS: Allow all preview/cloud domains (fly.dev, vercel, netlify) and localhost
 if (!$is_allowed_origin && !empty($origin)) {
-    // Allow any localhost variant
+    // localhost variants
     if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1|::1):/i', $origin)) {
         $is_allowed_origin = true;
     }
-    // Allow any fly.dev, vercel.app, netlify.app, or similar preview domains
+    // Cloud/preview domains: fly.dev, vercel.app, netlify.app
     if (preg_match('/\.fly\.dev$|\.vercel\.app$|\.netlify\.app$|localhost/i', $origin)) {
         $is_allowed_origin = true;
     }
 }
 
-// Set CORS response headers - allow credentials with specific origin (not wildcard)
-// Note: Cannot use wildcard (*) with credentials=true; must specify exact origin
+// CORS: Set response headers with allowed origin
 if ($is_allowed_origin && !empty($origin)) {
     header("Access-Control-Allow-Origin: {$origin}");
     header("Access-Control-Allow-Credentials: true");
 } else if (!empty($origin)) {
-    // Origin not in whitelist, but still send CORS header to indicate we support CORS
-    // Browser will block the response if origin is not allowed
+    // Still send CORS header even for non-allowed origins (browser will block)
     header("Access-Control-Allow-Origin: {$origin}");
 } else {
-    // If no origin header sent (direct server requests), allow all
+    // No origin sent - allow all (direct requests)
     header("Access-Control-Allow-Origin: *");
 }
 
-// Set additional CORS headers for all requests
-// Include more headers for better compatibility with different clients
+// CORS: Set additional headers for all requests
 header("Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD");
 header("Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Requested-With, X-CSRF-Token, X-API-Key, Accept-Language, Content-Language");
 header("Access-Control-Max-Age: 86400");
 header("Access-Control-Expose-Headers: Content-Type, X-Total-Count, X-Page, X-Page-Size, X-Request-Id, Content-Length, Authorization");
 
-// Prevent caching of API responses by default
+// Cache control
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
+
+// CORS: Handle OPTIONS preflight requests - respond immediately
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    ob_end_clean();
+    exit(0);
+}
 
 // ENDPOINT IDENTIFIER - Removed redundant endpoint logging (cleanup)
 
@@ -112,15 +110,6 @@ set_exception_handler(function($exception) {
     ]);
     exit();
 });
-
-// Handle CORS preflight requests (OPTIONS) - respond immediately
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    // All CORS headers are already set above
-    // No content needed for OPTIONS response
-    ob_end_clean();
-    exit(0);
-}
 
 // Configuration Variables - med.wayrus.co.ke
 // JWT Configuration
