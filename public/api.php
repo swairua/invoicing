@@ -1059,35 +1059,56 @@ try {
 
     // Authentication
     if ($action === "login") {
+        error_log("[LOGIN] 🔐 Login request received");
+        error_log("[LOGIN] Request method: " . $_SERVER['REQUEST_METHOD']);
+        error_log("[LOGIN] Request origin: " . ($_SERVER['HTTP_ORIGIN'] ?? 'none'));
+
         $email = $_POST['email'] ?? ($json_body['email'] ?? null);
         $password = $_POST['password'] ?? ($json_body['password'] ?? null);
 
+        error_log("[LOGIN] Email provided: " . ($email ? 'yes' : 'no'));
+        error_log("[LOGIN] Password provided: " . ($password ? 'yes (length: ' . strlen($password) . ')' : 'no'));
+
         if (!$email || !$password) {
+            error_log("[LOGIN] ❌ Missing email or password");
             throw new Exception("Missing email or password");
         }
 
         $email = escape($conn, $email);
+        error_log("[LOGIN] Escaped email: $email");
+
         $sql = "SELECT id, email, password, role FROM users WHERE email = '$email' LIMIT 1";
+        error_log("[LOGIN] Executing query: $sql");
+
         $result = $conn->query($sql);
 
         if (!$result || $result->num_rows === 0) {
+            error_log("[LOGIN] ❌ User not found in database");
             http_response_code(401);
             throw new Exception("Invalid email or password");
         }
 
+        error_log("[LOGIN] ✅ User found in database");
         $user = $result->fetch_assoc();
+        error_log("[LOGIN] User ID: " . $user['id']);
+        error_log("[LOGIN] User role: " . $user['role']);
 
         // Support both bcrypt and MD5 hashes for backwards compatibility
+        error_log("[LOGIN] Verifying password against stored hash...");
         $passwordMatch = verifyPassword($password, $user['password']) ||
                         ($user['password'] === md5($password)) ||
                         ($user['password'] === $password); // Raw password fallback
 
         if (!$passwordMatch) {
+            error_log("[LOGIN] ❌ Password verification failed");
             http_response_code(401);
             throw new Exception("Invalid email or password");
         }
 
+        error_log("[LOGIN] ✅ Password verified successfully");
+
         // Fetch full user profile including company_id and status
+        error_log("[LOGIN] Fetching user profile from profiles table...");
         $profile_sql = "SELECT id, email, role, status, company_id FROM profiles WHERE id = ? LIMIT 1";
         $profile_stmt = $conn->prepare($profile_sql);
         $profile_stmt->bind_param("s", $user['id']);
@@ -1096,8 +1117,19 @@ try {
         $profile = $profile_result->fetch_assoc();
         $profile_stmt->close();
 
+        if ($profile) {
+            error_log("[LOGIN] ✅ Profile found - Company ID: " . ($profile['company_id'] ?? 'null') . ", Status: " . $profile['status']);
+        } else {
+            error_log("[LOGIN] ⚠️  Profile not found, using defaults");
+        }
+
         // Create JWT token instead of session (include company_id and status)
+        error_log("[LOGIN] Creating JWT token...");
         $token = createJWT($user['id'], $user['email'], $user['role'], $profile ? $profile['company_id'] : null, $profile ? $profile['status'] : 'active');
+        error_log("[LOGIN] ✅ JWT token created successfully");
+        error_log("[LOGIN] Token length: " . strlen($token));
+
+        error_log("[LOGIN] ✅ LOGIN SUCCESSFUL - User: $email, ID: " . $user['id']);
 
         echo json_encode([
             'status' => 'success',
