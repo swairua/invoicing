@@ -1072,6 +1072,16 @@ export const downloadInvoicePDF = async (invoice: any, documentType: 'INVOICE' |
     };
   });
 
+  // Recalculate totals from transformed items to ensure consistency and avoid string-related truthy issues
+  // This handles the case where invoice.total_amount might be inconsistent with line items
+  const calculatedTaxAmount = transformedItems.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
+  const calculatedTotalAmount = transformedItems.reduce((sum, item) => sum + (item.line_total || 0), 0);
+  const calculatedSubtotal = calculatedTotalAmount - calculatedTaxAmount;
+
+  const paidAmount = Number(invoice.paid_amount || 0);
+  // Calculate balance due as the difference between total and paid to ensure consistency
+  const calculatedBalanceDue = Math.max(0, calculatedTotalAmount - paidAmount);
+
   const documentData: DocumentData = {
     type: docType,
     number: invoice.number || invoice.payment_number || invoice.invoice_number || invoice.receipt_number || `DOC-${Date.now()}`,
@@ -1089,11 +1099,11 @@ export const downloadInvoicePDF = async (invoice: any, documentType: 'INVOICE' |
       country: invoice.customers?.country,
     },
     items: transformedItems,
-    subtotal: invoice.subtotal || 0,
-    tax_amount: invoice.tax_amount || 0,
-    total_amount: invoice.total_amount || 0,
-    paid_amount: invoice.paid_amount || 0,
-    balance_due: invoice.balance_due || (invoice.total_amount ? invoice.total_amount - (invoice.paid_amount || 0) : 0),
+    subtotal: calculatedSubtotal,
+    tax_amount: calculatedTaxAmount,
+    total_amount: calculatedTotalAmount,
+    paid_amount: paidAmount,
+    balance_due: calculatedBalanceDue,
     notes: invoice.notes,
     terms_and_conditions: invoice.terms_and_conditions,
   };
