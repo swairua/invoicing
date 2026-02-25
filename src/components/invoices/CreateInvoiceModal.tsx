@@ -171,12 +171,16 @@ The project will be delivered within one (1) month, provided all required conten
     let taxAmount = 0;
     let lineTotal = 0;
 
-    if (tax === 0 || !inclusive) {
-      // No tax or tax checkbox unchecked
+    if (tax === 0) {
+      // No tax
       lineTotal = afterDiscountAmount;
       taxAmount = 0;
+    } else if (inclusive) {
+      // Tax is included in the price
+      lineTotal = afterDiscountAmount;
+      taxAmount = afterDiscountAmount - (afterDiscountAmount / (1 + tax / 100));
     } else {
-      // Tax checkbox checked: add tax to the discounted amount
+      // Tax is added on top
       taxAmount = afterDiscountAmount * (tax / 100);
       lineTotal = afterDiscountAmount + taxAmount;
     }
@@ -212,7 +216,7 @@ The project will be delivered within one (1) month, provided all required conten
   const updateItemVAT = (itemId: string, vatPercentage: number) => {
     setItems(items.map(item => {
       if (item.id === itemId) {
-        const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, 0, vatPercentage);
+        const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, undefined, vatPercentage);
         return { ...item, tax_percentage: vatPercentage, line_total: lineTotal, tax_amount: taxAmount };
       }
       return item;

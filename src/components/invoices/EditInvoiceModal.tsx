@@ -131,10 +131,11 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
     const price = unitPrice ?? item.unit_price;
     const discount = discountPercentage ?? item.discount_percentage;
     const tax = taxPercentage ?? item.tax_percentage;
+    const inclusive = taxInclusive ?? item.tax_inclusive;
 
-    let subtotal = qty * price;
-    let discountAmount = subtotal * (discount / 100);
-    let afterDiscount = subtotal - discountAmount;
+    let baseAmount = qty * price;
+    let discountAmount = baseAmount * (discount / 100);
+    let afterDiscount = baseAmount - discountAmount;
 
     let taxAmount = 0;
     let lineTotal = 0;
@@ -143,8 +144,12 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
       // No VAT applied
       lineTotal = afterDiscount;
       taxAmount = 0;
+    } else if (inclusive) {
+      // Tax is included in the price
+      lineTotal = afterDiscount;
+      taxAmount = afterDiscount - (afterDiscount / (1 + tax / 100));
     } else {
-      // Both inclusive and exclusive now add VAT on top
+      // Tax is added on top
       taxAmount = afterDiscount * (tax / 100);
       lineTotal = afterDiscount + taxAmount;
     }
@@ -221,7 +226,9 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
   const updateItemDiscountBeforeVat = (itemId: string, discountBeforeVat: number) => {
     setItems(items.map(item => {
       if (item.id === itemId) {
-        return { ...item, discount_before_vat: discountBeforeVat };
+        // Use discountBeforeVat as discount_percentage to stay consistent with CreateInvoiceModal behavior
+        const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, discountBeforeVat);
+        return { ...item, discount_before_vat: discountBeforeVat, discount_percentage: discountBeforeVat, line_total: lineTotal, tax_amount: taxAmount };
       }
       return item;
     }));
