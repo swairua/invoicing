@@ -143,7 +143,30 @@ export default function Quotations() {
       const result = await db.selectOne('quotations', quotation.id);
 
       if (result.error) throw result.error;
-      setSelectedQuotation(result.data as Quotation);
+      const quotationData = result.data as Quotation;
+
+      // Fetch items
+      const itemsResult = await db.selectBy('quotation_items', { quotation_id: quotation.id });
+      if (!itemsResult.error && itemsResult.data) {
+        // Fetch product details for each item
+        const itemsWithProducts = await Promise.all(
+          itemsResult.data.map(async (item: any) => {
+            if (item.product_id) {
+              const productResult = await db.selectOne('products', item.product_id);
+              if (!productResult.error && productResult.data) {
+                return {
+                  ...item,
+                  products: productResult.data
+                };
+              }
+            }
+            return item;
+          })
+        );
+        quotationData.quotation_items = itemsWithProducts;
+      }
+
+      setSelectedQuotation(quotationData);
       setShowEditModal(true);
     } catch (error) {
       console.error('Error fetching quotation data:', error);
@@ -257,7 +280,22 @@ Email: ${companyEmail}`;
       // Fetch items
       const itemsResult = await db.selectBy('quotation_items', { quotation_id: quotation.id });
       if (!itemsResult.error && itemsResult.data) {
-        quotationData.quotation_items = itemsResult.data;
+        // Fetch product details for each item
+        const itemsWithProducts = await Promise.all(
+          itemsResult.data.map(async (item: any) => {
+            if (item.product_id) {
+              const productResult = await db.selectOne('products', item.product_id);
+              if (!productResult.error && productResult.data) {
+                return {
+                  ...item,
+                  products: productResult.data
+                };
+              }
+            }
+            return item;
+          })
+        );
+        quotationData.quotation_items = itemsWithProducts;
       }
 
       setSelectedQuotation(quotationData);
@@ -284,7 +322,22 @@ Email: ${companyEmail}`;
       // Fetch items
       const itemsResult = await db.selectBy('quotation_items', { quotation_id: quotation.id });
       if (!itemsResult.error && itemsResult.data) {
-        quotationData.quotation_items = itemsResult.data;
+        // Fetch product details for each item
+        const itemsWithProducts = await Promise.all(
+          itemsResult.data.map(async (item: any) => {
+            if (item.product_id) {
+              const productResult = await db.selectOne('products', item.product_id);
+              if (!productResult.error && productResult.data) {
+                return {
+                  ...item,
+                  products: productResult.data
+                };
+              }
+            }
+            return item;
+          })
+        );
+        quotationData.quotation_items = itemsWithProducts;
       }
 
       setSelectedQuotation(quotationData);
