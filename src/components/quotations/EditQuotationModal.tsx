@@ -79,30 +79,67 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
   // Load quotation data when modal opens
   useEffect(() => {
     if (quotation && open) {
-      setSelectedCustomerId(quotation.customers?.id || '');
+      setSelectedCustomerId(quotation.customer_id || '');
       setQuotationDate(quotation.quotation_date || '');
       setValidUntil(quotation.valid_until || '');
       setNotes(quotation.notes || '');
       setTermsAndConditions(quotation.terms_and_conditions || '');
-      
-      // Convert quotation items to local format
-      const quotationItems = (quotation.quotation_items || []).map((item: any, index: number) => ({
-        id: item.id || `existing-${index}`,
-        product_id: item.product_id || '',
-        product_name: item.products?.name || 'Unknown Product',
-        description: item.description || '',
-        quantity: item.quantity || 0,
-        unit_price: item.unit_price || 0,
-        discount_percentage: item.discount_percentage || 0,
-        tax_percentage: item.tax_percentage || 16,
-        tax_amount: item.tax_amount || 0,
-        tax_inclusive: item.tax_inclusive || false,
-        line_total: item.line_total || 0,
-      }));
-      
+
+      // Convert quotation items to local format and recalculate totals
+      const quotationItems = (quotation.quotation_items || []).map((item: any, index: number) => {
+        let itemTaxPercentage = item.tax_percentage || 0;
+        let itemTaxInclusive = item.tax_inclusive || false;
+
+        // If tax_inclusive is true but tax_percentage is 0, apply default tax rate
+        if (itemTaxInclusive && itemTaxPercentage === 0) {
+          itemTaxPercentage = defaultTaxRate;
+        }
+
+        const baseItem = {
+          id: item.id || `existing-${index}`,
+          product_id: item.product_id || '',
+          product_name: item.products?.name || 'Unknown Product',
+          description: item.description || '',
+          quantity: item.quantity || 0,
+          unit_price: item.unit_price || 0,
+          discount_percentage: item.discount_percentage || 0,
+          tax_percentage: itemTaxPercentage,
+          tax_amount: item.tax_amount || 0,
+          tax_inclusive: itemTaxInclusive,
+          line_total: item.line_total || 0,
+        };
+
+        // Recalculate line total to ensure consistency
+        const qty = baseItem.quantity;
+        const price = baseItem.unit_price;
+        const discount = baseItem.discount_percentage;
+        const tax = baseItem.tax_percentage;
+
+        let subtotal = qty * price;
+        let discountAmount = subtotal * (discount / 100);
+        let afterDiscount = subtotal - discountAmount;
+
+        let taxAmount = 0;
+        let lineTotal = 0;
+
+        if (tax === 0) {
+          lineTotal = afterDiscount;
+          taxAmount = 0;
+        } else {
+          taxAmount = afterDiscount * (tax / 100);
+          lineTotal = afterDiscount + taxAmount;
+        }
+
+        return {
+          ...baseItem,
+          tax_amount: isFinite(taxAmount) ? taxAmount : 0,
+          line_total: isFinite(lineTotal) ? lineTotal : 0,
+        };
+      });
+
       setItems(quotationItems);
     }
-  }, [quotation, open]);
+  }, [quotation, open, defaultTaxRate]);
 
   const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
@@ -234,10 +271,17 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
     // Always use base amount for subtotal (unit price × quantity × discount)
     // VAT is calculated separately and added for exclusive, or extracted for inclusive
     const itemSubtotal = (item.quantity * item.unit_price) * (1 - item.discount_percentage / 100);
-    return sum + itemSubtotal;
+    const safeSubtotal = isFinite(itemSubtotal) ? itemSubtotal : 0;
+    return sum + safeSubtotal;
   }, 0);
-  const taxAmount = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
-  const totalAmount = items.reduce((sum, item) => sum + item.line_total, 0);
+  const taxAmount = items.reduce((sum, item) => {
+    const safeTaxAmount = isFinite(item.tax_amount) ? item.tax_amount : 0;
+    return sum + safeTaxAmount;
+  }, 0);
+  const totalAmount = items.reduce((sum, item) => {
+    const safeLineTotal = isFinite(item.line_total) ? item.line_total : 0;
+    return sum + safeLineTotal;
+  }, 0);
 
   const handleSubmit = async () => {
     if (!selectedCustomerId) {

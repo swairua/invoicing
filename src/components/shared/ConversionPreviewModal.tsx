@@ -111,11 +111,21 @@ export function ConversionPreviewModal({
   // Initialize items from sourceDocument
   useEffect(() => {
     if (open && sourceDocument.items) {
-      setItems(sourceDocument.items.map(item => ({
-        ...item,
-        tax_percentage: item.tax_percentage ?? 0,
-        tax_inclusive: item.tax_inclusive ?? false,
-      })));
+      setItems(sourceDocument.items.map(item => {
+        const result = calculateLineItemTotal({
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          tax_percentage: item.tax_percentage ?? 0,
+          tax_inclusive: item.tax_inclusive ?? false
+        });
+        return {
+          ...item,
+          tax_percentage: item.tax_percentage ?? 0,
+          tax_inclusive: item.tax_inclusive ?? false,
+          tax_amount: result.tax_amount,
+          line_total: result.line_total
+        };
+      }));
     }
   }, [open, sourceDocument.items]);
 
@@ -124,18 +134,22 @@ export function ConversionPreviewModal({
 
   // Recalculate totals
   const totals = useMemo(() => {
-    const subtotal = items.reduce((sum, item) => {
-      // Use the subtotal from calculateLineItemTotal logic
+    let subtotal = 0;
+    let tax_amount = 0;
+    let total_amount = 0;
+
+    items.forEach((item) => {
+      // Always recalculate line totals to ensure consistency
       const result = calculateLineItemTotal({
         quantity: item.quantity,
         unit_price: item.unit_price,
         tax_percentage: item.tax_percentage,
         tax_inclusive: item.tax_inclusive
       });
-      return sum + result.subtotal;
-    }, 0);
-    const tax_amount = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
-    const total_amount = items.reduce((sum, item) => sum + (item.line_total || 0), 0);
+      subtotal += result.subtotal;
+      tax_amount += result.tax_amount;
+      total_amount += result.line_total;
+    });
 
     return { subtotal, tax_amount, total_amount };
   }, [items]);
