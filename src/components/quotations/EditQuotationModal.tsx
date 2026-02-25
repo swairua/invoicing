@@ -79,7 +79,7 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
   // Load quotation data when modal opens
   useEffect(() => {
     if (quotation && open) {
-      setSelectedCustomerId(quotation.customers?.id || '');
+      setSelectedCustomerId(quotation.customer_id || '');
       setQuotationDate(quotation.quotation_date || '');
       setValidUntil(quotation.valid_until || '');
       setNotes(quotation.notes || '');
