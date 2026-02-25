@@ -836,6 +836,14 @@ export class ExternalAPIAdapter implements IDatabase {
 
   async checkAuth(): Promise<{ user: any; error: Error | null }> {
     try {
+      const token = this.getAuthToken();
+      if (!token) {
+        return {
+          user: null,
+          error: new Error('No token found'),
+        };
+      }
+
       // Check if we're within grace period after login (5 seconds minimum)
       const GRACE_PERIOD = 5000; // 5 seconds
       if (this.lastLoginTime !== null) {
@@ -848,9 +856,6 @@ export class ExternalAPIAdapter implements IDatabase {
           };
         }
       }
-
-      // Automatically refresh token if needed before checking auth
-      await this.refreshTokenIfNeeded();
 
       const controller = new AbortController();
       let timeoutId: NodeJS.Timeout | null = null;

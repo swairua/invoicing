@@ -301,84 +301,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [user]);
 
-  // Periodic token validation - check every 5 minutes if token is still valid
-  // This catches tokens that become invalid while the app is running (e.g., admin revokes)
+  // Grace period effect - clear the grace period flag after it expires
   useEffect(() => {
-    if (!user) return; // Only validate if user is authenticated
+    if (justLoggedInRef.current === null) return;
 
-    const validateTokenPeriodically = async () => {
-      if (!mountedRef.current) return;
-
-      // Check if we're still within grace period after login
+    const timer = setTimeout(() => {
       if (justLoggedInRef.current !== null) {
-        const timeSinceLogin = Date.now() - justLoggedInRef.current;
-        if (timeSinceLogin < GRACE_PERIOD_AFTER_LOGIN) {
-          console.log(`⏳ Within grace period after login (${Math.round(timeSinceLogin / 1000)}s < ${GRACE_PERIOD_AFTER_LOGIN / 1000}s), skipping token validation`);
-          return;
-        } else {
-          // Grace period has expired - clear the flag
-          justLoggedInRef.current = null;
-          console.log('✅ Grace period after login has ended, resuming normal token validation');
-        }
+        justLoggedInRef.current = null;
+        console.log('✅ Grace period after login has ended');
       }
+    }, GRACE_PERIOD_AFTER_LOGIN);
 
-      const token = localStorage.getItem('med_api_token');
-      if (!token) {
-        // Token was cleared - logout
-        if (user) {
-          console.warn('⚠️ Token was cleared externally, logging out');
-          toast.error('Your session has expired. Please log in again.');
-          setUser(null);
-          setProfile(null);
-          setSession(null);
-        }
-        return;
-      }
-
-      try {
-        // Silently check if token is still valid
-        const { user: validatedUser, error } = await apiClient.auth.checkAuth();
-
-        if (error || !validatedUser) {
-          // Only clear token on actual auth errors, not network errors
-          if (error && error.message && (
-            error.message.includes('401') ||
-            error.message.includes('Unauthorized') ||
-            error.message.includes('Not authenticated')
-          )) {
-            // Token is no longer valid - actual auth failure
-            console.warn('⚠️ Token validation failed during periodic check:', error?.message);
-            clearAuthTokens();
-
-            if (mountedRef.current && user) {
-              setUser(null);
-              setProfile(null);
-              setSession(null);
-              toast.error('Your authentication session is no longer valid. Please log in again.');
-              console.log('🔐 User logged out due to invalid token');
-            }
-          } else if (error) {
-            // Network or other error - don't logout
-            console.warn('⚠️ Periodic token validation error (network issue):', error?.message);
-          }
-        }
-      } catch (error) {
-        console.warn('⚠️ Periodic token validation error:', error);
-        // Don't logout on network errors - user might just be offline
-      }
-    };
-
-    // Run validation every 5 minutes
-    const validationInterval = setInterval(validateTokenPeriodically, 5 * 60 * 1000);
-
-    // Also do initial check after short delay, but it will respect the grace period
-    const initialCheckTimeout = setTimeout(validateTokenPeriodically, 2000);
-
-    return () => {
-      clearInterval(validationInterval);
-      clearTimeout(initialCheckTimeout);
-    };
-  }, [user]); // Re-run when user changes
+    return () => clearTimeout(timer);
+  }, [GRACE_PERIOD_AFTER_LOGIN]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
