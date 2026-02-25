@@ -98,14 +98,14 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
           product_id: item.product_id || '',
           product_name: productName,
           description: item.description || '',
-          quantity: item.quantity || 0,
-          unit_price: item.unit_price || 0,
-          discount_percentage: item.discount_percentage || 0,
-          discount_before_vat: item.discount_before_vat || 0,
-          tax_percentage: item.tax_percentage || 16,
-          tax_amount: item.tax_amount || 0,
-          tax_inclusive: item.tax_inclusive || false,
-          line_total: item.line_total || 0,
+          quantity: Number(item.quantity || 0),
+          unit_price: Number(item.unit_price || 0),
+          discount_percentage: Number(item.discount_percentage || 0),
+          discount_before_vat: Number(item.discount_before_vat || 0),
+          tax_percentage: Number(item.tax_percentage ?? 16),
+          tax_amount: Number(item.tax_amount || 0),
+          tax_inclusive: !!item.tax_inclusive,
+          line_total: Number(item.line_total || 0),
         };
       });
 
@@ -127,29 +127,38 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
   ) || [];
 
   const calculateLineTotal = (item: InvoiceItem, quantity?: number, unitPrice?: number, discountPercentage?: number, taxPercentage?: number, taxInclusive?: boolean) => {
-    const qty = quantity ?? item.quantity;
-    const price = unitPrice ?? item.unit_price;
-    const discount = discountPercentage ?? item.discount_percentage;
-    const tax = taxPercentage ?? item.tax_percentage;
+    const qty = Number(quantity ?? item.quantity ?? 0);
+    const price = Number(unitPrice ?? item.unit_price ?? 0);
+    const discount = Number(discountPercentage ?? item.discount_percentage ?? 0);
+    const tax = Number(taxPercentage ?? item.tax_percentage ?? 0);
+    const inclusive = taxInclusive ?? item.tax_inclusive;
 
-    let subtotal = qty * price;
-    let discountAmount = subtotal * (discount / 100);
-    let afterDiscount = subtotal - discountAmount;
+    let baseAmount = qty * price;
+    let discountAmount = baseAmount * (discount / 100);
+    let afterDiscount = baseAmount - discountAmount;
 
     let taxAmount = 0;
     let lineTotal = 0;
 
-    if (tax === 0) {
+    if (isNaN(tax) || tax === 0) {
       // No VAT applied
       lineTotal = afterDiscount;
       taxAmount = 0;
+    } else if (inclusive) {
+      // Tax is included in the price
+      lineTotal = afterDiscount;
+      taxAmount = afterDiscount - (afterDiscount / (1 + tax / 100));
     } else {
-      // Both inclusive and exclusive now add VAT on top
+      // Tax is added on top
       taxAmount = afterDiscount * (tax / 100);
       lineTotal = afterDiscount + taxAmount;
     }
 
-    return { lineTotal, taxAmount };
+    // Rounding to 2 decimal places to avoid floating point issues
+    return {
+      lineTotal: Math.round(lineTotal * 100) / 100,
+      taxAmount: Math.round(taxAmount * 100) / 100
+    };
   };
 
   const addItem = (product: any) => {
@@ -221,7 +230,9 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
   const updateItemDiscountBeforeVat = (itemId: string, discountBeforeVat: number) => {
     setItems(items.map(item => {
       if (item.id === itemId) {
-        return { ...item, discount_before_vat: discountBeforeVat };
+        // Use discountBeforeVat as discount_percentage to stay consistent with CreateInvoiceModal behavior
+        const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, discountBeforeVat);
+        return { ...item, discount_before_vat: discountBeforeVat, discount_percentage: discountBeforeVat, line_total: lineTotal, tax_amount: taxAmount };
       }
       return item;
     }));
@@ -282,12 +293,15 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
   const subtotal = items.reduce((sum, item) => {
     // Always use base amount for subtotal (unit price × quantity × discount)
     // VAT is calculated separately and added for exclusive, or extracted for inclusive
-    const itemSubtotal = (item.quantity * item.unit_price) * (1 - item.discount_percentage / 100);
-    return sum + itemSubtotal;
+    const qty = Number(item.quantity || 0);
+    const price = Number(item.unit_price || 0);
+    const discount = Number(item.discount_percentage || 0);
+    const itemSubtotal = (qty * price) * (1 - discount / 100);
+    return sum + (Number.isFinite(itemSubtotal) ? itemSubtotal : 0);
   }, 0);
-  const taxAmount = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
-  const totalAmount = items.reduce((sum, item) => sum + item.line_total, 0);
-  const balanceDue = totalAmount - (invoice?.paid_amount || 0);
+  const taxAmount = items.reduce((sum, item) => sum + (Number(item.tax_amount) || 0), 0);
+  const totalAmount = items.reduce((sum, item) => sum + (Number(item.line_total) || 0), 0);
+  const balanceDue = totalAmount - Number(invoice?.paid_amount || 0);
 
   const handleSubmit = async () => {
     if (!selectedCustomerId) {

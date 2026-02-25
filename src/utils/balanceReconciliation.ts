@@ -6,6 +6,7 @@ export interface ReconciliationResult {
   invoiceId: string;
   invoiceNumber: string;
   totalAmount: number;
+  calculatedTotalAmount: number;
   calculatedPaidAmount: number;
   storedPaidAmount: number;
   calculatedBalance: number;
@@ -19,7 +20,7 @@ export interface ReconciliationResult {
 }
 
 /**
- * Reconcile invoice balance with payment allocations
+ * Reconcile invoice balance with payment allocations and line items
  * Detects and optionally fixes discrepancies
  */
 export async function reconcileInvoiceBalance(
@@ -35,17 +36,34 @@ export async function reconcileInvoiceBalance(
     const invoice = invoiceResult.data;
     if (!invoice) throw new Error('Invoice not found');
 
-    // 2. Get all allocations for this invoice
+    // 2. Get all items and allocations for this invoice
+    const itemsResult = await db.selectBy('invoice_items', { invoice_id: invoiceId });
+    if (itemsResult.error) throw itemsResult.error;
+    const items = itemsResult.data || [];
+
     const allocationsResult = await db.selectBy('payment_allocations', { invoice_id: invoiceId });
     if (allocationsResult.error) throw allocationsResult.error;
     const allocations = allocationsResult.data || [];
 
     // 3. Calculate values
-    const calculatedPaidAmount = (allocations || []).reduce(
-      (sum, alloc) => sum + (alloc.amount_allocated || 0),
+    const storedTotalAmount = Number(invoice.total_amount || 0);
+    const storedPaidAmount = Number(invoice.paid_amount || 0);
+    const storedBalance = Number(invoice.balance_due || 0);
+
+    // Calculate total from items
+    const calculatedTotalAmount = (items || []).reduce(
+      (sum, item) => sum + Number(item.line_total || 0),
       0
     );
-    const calculatedBalance = invoice.total_amount - calculatedPaidAmount;
+
+    // Use calculated total if items exist, otherwise fall back to stored total
+    const effectiveTotalAmount = items.length > 0 ? calculatedTotalAmount : storedTotalAmount;
+
+    const calculatedPaidAmount = (allocations || []).reduce(
+      (sum, alloc) => sum + Number(alloc.amount_allocated || 0),
+      0
+    );
+    const calculatedBalance = effectiveTotalAmount - calculatedPaidAmount;
 
     // 4. Determine expected status (using tolerance for floating-point precision)
     let expectedStatus = 'draft';
@@ -58,20 +76,26 @@ export async function reconcileInvoiceBalance(
     }
 
     // 5. Check for discrepancies
-    const paidAmountDiscrepancy = Math.abs((invoice.paid_amount || 0) - calculatedPaidAmount);
-    const balanceDiscrepancy = Math.abs((invoice.balance_due || 0) - calculatedBalance);
+    const totalDiscrepancy = Math.abs(storedTotalAmount - calculatedTotalAmount);
+    const paidAmountDiscrepancy = Math.abs(storedPaidAmount - calculatedPaidAmount);
+    const balanceDiscrepancy = Math.abs(storedBalance - calculatedBalance);
     const statusMismatch = invoice.status !== expectedStatus;
-    const hasDiscrepancy = paidAmountDiscrepancy > 0.01 || balanceDiscrepancy > 0.01 || statusMismatch;
+
+    // We only consider it a discrepancy if items exist and their sum doesn't match total_amount,
+    // or if the balance/paid amounts are wrong.
+    const hasTotalDiscrepancy = items.length > 0 && totalDiscrepancy > 0.01;
+    const hasDiscrepancy = hasTotalDiscrepancy || paidAmountDiscrepancy > 0.01 || balanceDiscrepancy > 0.01 || statusMismatch;
 
     const result: ReconciliationResult = {
       invoiceId: invoice.id,
       invoiceNumber: invoice.invoice_number,
-      totalAmount: invoice.total_amount,
+      totalAmount: storedTotalAmount,
+      calculatedTotalAmount,
       calculatedPaidAmount,
-      storedPaidAmount: invoice.paid_amount || 0,
+      storedPaidAmount: storedPaidAmount,
       calculatedBalance,
-      storedBalance: invoice.balance_due || 0,
-      discrepancy: Math.max(paidAmountDiscrepancy, balanceDiscrepancy),
+      storedBalance: storedBalance,
+      discrepancy: Math.max(totalDiscrepancy, paidAmountDiscrepancy, balanceDiscrepancy),
       status: hasDiscrepancy ? 'mismatched' : 'matched',
       expectedStatus,
       actualStatus: invoice.status,
@@ -81,6 +105,7 @@ export async function reconcileInvoiceBalance(
     // 6. Fix if requested and needed
     if (fix && hasDiscrepancy) {
       const updateResult = await db.update('invoices', invoiceId, {
+        total_amount: effectiveTotalAmount,
         paid_amount: calculatedPaidAmount,
         balance_due: calculatedBalance,
         status: expectedStatus,

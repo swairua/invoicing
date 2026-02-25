@@ -157,10 +157,10 @@ The project will be delivered within one (1) month, provided all required conten
   };
 
   const calculateLineTotal = (item: InvoiceItem, quantity?: number, unitPrice?: number, discountPercentage?: number, taxPercentage?: number, taxInclusive?: boolean) => {
-    const qty = quantity ?? item.quantity;
-    const price = unitPrice ?? item.unit_price;
-    const discount = discountPercentage ?? item.discount_before_vat ?? 0;
-    const tax = taxPercentage ?? item.tax_percentage;
+    const qty = Number(quantity ?? item.quantity ?? 0);
+    const price = Number(unitPrice ?? item.unit_price ?? 0);
+    const discount = Number(discountPercentage ?? item.discount_before_vat ?? 0);
+    const tax = Number(taxPercentage ?? item.tax_percentage ?? 0);
     const inclusive = taxInclusive ?? item.tax_inclusive;
 
     // Calculate base amount after discount
@@ -171,17 +171,26 @@ The project will be delivered within one (1) month, provided all required conten
     let taxAmount = 0;
     let lineTotal = 0;
 
-    if (tax === 0 || !inclusive) {
-      // No tax or tax checkbox unchecked
+    if (isNaN(tax) || tax === 0) {
+      // No tax
       lineTotal = afterDiscountAmount;
       taxAmount = 0;
+    } else if (inclusive) {
+      // Tax is included in the price
+      lineTotal = afterDiscountAmount;
+      taxAmount = afterDiscountAmount - (afterDiscountAmount / (1 + tax / 100));
     } else {
-      // Tax checkbox checked: add tax to the discounted amount
+      // Tax is added on top
       taxAmount = afterDiscountAmount * (tax / 100);
       lineTotal = afterDiscountAmount + taxAmount;
     }
 
-    return { lineTotal, taxAmount, discountAmount };
+    // Rounding to 2 decimal places to avoid floating point issues
+    return {
+      lineTotal: Math.round(lineTotal * 100) / 100,
+      taxAmount: Math.round(taxAmount * 100) / 100,
+      discountAmount: Math.round(discountAmount * 100) / 100
+    };
   };
 
   const updateItemQuantity = (itemId: string, quantity: number) => {
@@ -212,7 +221,7 @@ The project will be delivered within one (1) month, provided all required conten
   const updateItemVAT = (itemId: string, vatPercentage: number) => {
     setItems(items.map(item => {
       if (item.id === itemId) {
-        const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, 0, vatPercentage);
+        const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, undefined, vatPercentage);
         return { ...item, tax_percentage: vatPercentage, line_total: lineTotal, tax_amount: taxAmount };
       }
       return item;
@@ -274,16 +283,24 @@ The project will be delivered within one (1) month, provided all required conten
 
   const subtotal = items.reduce((sum, item) => {
     // Calculate subtotal as base amount minus discounts
-    const baseAmount = item.quantity * item.unit_price;
-    const discountAmount = baseAmount * ((item.discount_before_vat || 0) / 100);
-    return sum + (baseAmount - discountAmount);
+    const qty = Number(item.quantity || 0);
+    const price = Number(item.unit_price || 0);
+    const discount = Number(item.discount_before_vat || 0);
+    const baseAmount = qty * price;
+    const discountAmount = baseAmount * (discount / 100);
+    const itemSubtotal = baseAmount - discountAmount;
+    return sum + (Number.isFinite(itemSubtotal) ? itemSubtotal : 0);
   }, 0);
   const totalDiscountAmount = items.reduce((sum, item) => {
-    const baseAmount = item.quantity * item.unit_price;
-    return sum + (baseAmount * ((item.discount_before_vat || 0) / 100));
+    const qty = Number(item.quantity || 0);
+    const price = Number(item.unit_price || 0);
+    const discount = Number(item.discount_before_vat || 0);
+    const baseAmount = qty * price;
+    const discountAmount = baseAmount * (discount / 100);
+    return sum + (Number.isFinite(discountAmount) ? discountAmount : 0);
   }, 0);
-  const taxAmount = items.reduce((sum, item) => sum + (item.tax_amount || 0), 0);
-  const totalAmount = items.reduce((sum, item) => sum + item.line_total, 0);
+  const taxAmount = items.reduce((sum, item) => sum + (Number(item.tax_amount) || 0), 0);
+  const totalAmount = items.reduce((sum, item) => sum + (Number(item.line_total) || 0), 0);
   const balanceDue = totalAmount; // Full amount due initially
 
   const handleSubmit = async () => {
