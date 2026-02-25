@@ -105,6 +105,15 @@ export const usePermissions = () => {
       };
       console.log('📝 [usePermissions] Filter object:', filterObj);
 
+      // Check if token is available before making the query
+      const tokenInStorage = localStorage.getItem('med_api_token');
+      console.log('🔐 [usePermissions] Token availability check:', {
+        hasToken: !!tokenInStorage,
+        tokenLength: tokenInStorage?.length || 0,
+        tokenParts: tokenInStorage ? tokenInStorage.split('.').length : 0,
+        tokenPreview: tokenInStorage ? tokenInStorage.substring(0, 20) + '...' : 'NONE',
+      });
+
       const result = await db.selectBy('roles', filterObj);
 
       const fetchError = result.error;

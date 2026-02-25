@@ -320,11 +320,17 @@ export class ExternalAPIAdapter implements IDatabase {
         const tokenParts = currentToken.split('.');
         if (tokenParts.length === 3) {
           headers['Authorization'] = `Bearer ${currentToken}`;
+          console.log(`✅ Token added to Authorization header for ${action}${table ? ` on ${table}` : ''}`);
         } else {
           console.warn(`⚠️ Token in localStorage has invalid format (${tokenParts.length} parts, expected 3)`);
+          console.warn(`Token value: ${currentToken.substring(0, 50)}...`);
           console.warn('Token will not be sent - may cause 401 error');
-          this.clearAuthToken();
+          // DON'T clear the token immediately - it might be in transit
+          // Log it for diagnostics instead
+          console.error('Token validation failed - keeping token for now but marking as suspect');
         }
+      } else {
+        console.warn(`⚠️ No token in localStorage for ${action}${table ? ` on ${table}` : ''} - request will be unauthenticated`);
       }
 
       // Log token status for debugging updates
@@ -528,6 +534,7 @@ export class ExternalAPIAdapter implements IDatabase {
 
           const hasToken = !!this.getAuthToken();
           const userId = localStorage.getItem('med_api_user_id');
+          const token = this.getAuthToken();
 
           console.error('📊 401 Debug Info:');
           console.error('   - Has Token:', hasToken);
@@ -535,10 +542,21 @@ export class ExternalAPIAdapter implements IDatabase {
           console.error('   - Action:', action);
           console.error('   - Table:', table);
           console.error('   - Method:', method);
-          if (hasToken) {
-            const token = this.getAuthToken();
-            console.error('   - Token Format:', token?.substring(0, 20) + '...');
-            console.error('   - Token Length:', token?.length);
+          console.error('   - Authorization Header Present:', 'Authorization' in headers);
+          if (hasToken && token) {
+            const tokenParts = token.split('.');
+            console.error('   - Token Format:', tokenParts.length === 3 ? '✅ Valid JWT' : `❌ Invalid (${tokenParts.length} parts)`);
+            console.error('   - Token Length:', token.length);
+            console.error('   - Token Preview:', token.substring(0, 20) + '...' + token.substring(token.length - 10));
+            // Try to decode the token to see what's in it
+            try {
+              if (tokenParts.length === 3) {
+                const payload = JSON.parse(atob(tokenParts[1]));
+                console.error('   - Token Payload:', payload);
+              }
+            } catch (e) {
+              console.error('   - Could not decode token payload:', e);
+            }
           }
 
           // Run full diagnostics when 401 occurs
@@ -698,23 +716,42 @@ export class ExternalAPIAdapter implements IDatabase {
           const tokenParts = result.token.split('.');
           if (tokenParts.length === 3) {
             // Valid JWT format (header.payload.signature)
+            console.log('🔐 Token received from server - 3 parts ✅');
+
             this.setAuthToken(result.token);
+            console.log('🔐 Token stored in localStorage');
 
             // Verify it was stored correctly
             const storedToken = this.getAuthToken();
             if (storedToken === result.token) {
-              console.log('✅ Token stored successfully');
+              console.log('✅ Token storage verification PASSED');
               console.log('   - Token Format: Valid JWT (3 parts)');
               console.log('   - Token Length:', result.token.length);
               console.log('   - Token Preview:', result.token.substring(0, 30) + '...');
+
+              // Try to decode and verify the token structure
+              try {
+                const payload = JSON.parse(atob(tokenParts[1]));
+                console.log('✅ Token payload decoded successfully:', {
+                  sub: payload.sub,
+                  email: payload.email,
+                  role: payload.role,
+                  exp: new Date(payload.exp * 1000).toISOString(),
+                });
+              } catch (e) {
+                console.warn('⚠️ Could not decode token payload:', e);
+              }
             } else {
-              console.error('❌ Token storage verification failed - stored token does not match');
+              console.error('❌ Token storage verification FAILED');
+              console.error('   - Expected:', result.token.substring(0, 30));
+              console.error('   - Got:', storedToken?.substring(0, 30));
               throw new Error('Token storage verification failed');
             }
           } else {
             console.error('❌ Invalid token format received from server');
             console.error('   - Expected JWT format (header.payload.signature)');
             console.error('   - Received:', result.token.substring(0, 50));
+            console.error('   - Token parts:', tokenParts.length);
             throw new Error('Invalid token format from server');
           }
 
@@ -836,6 +873,14 @@ export class ExternalAPIAdapter implements IDatabase {
 
   async checkAuth(): Promise<{ user: any; error: Error | null }> {
     try {
+      const token = this.getAuthToken();
+      if (!token) {
+        return {
+          user: null,
+          error: new Error('No token found'),
+        };
+      }
+
       // Check if we're within grace period after login (5 seconds minimum)
       const GRACE_PERIOD = 5000; // 5 seconds
       if (this.lastLoginTime !== null) {
@@ -848,9 +893,6 @@ export class ExternalAPIAdapter implements IDatabase {
           };
         }
       }
-
-      // Automatically refresh token if needed before checking auth
-      await this.refreshTokenIfNeeded();
 
       const controller = new AbortController();
       let timeoutId: NodeJS.Timeout | null = null;
