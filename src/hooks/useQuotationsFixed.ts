@@ -14,6 +14,13 @@ export const useQuotationsFixed = (companyId?: string) => {
         return [];
       }
 
+      // Verify user is authenticated before making API calls
+      const { user, error: authError } = await apiClient.auth.getSession();
+      if (authError || !user) {
+        console.warn('[useQuotationsFixed] User not authenticated:', authError?.message || 'No session');
+        return [];
+      }
+
       try {
         console.log('[useQuotationsFixed] Starting fetch for companyId:', companyId);
 

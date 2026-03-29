@@ -25,7 +25,7 @@ export const routePermissionMap: RoutePermissionMap = {
 
   // Sales Routes
   '/app/quotations': {
-    requiredPermissions: ['view_quotation', 'create_quotation', 'edit_quotation'],
+    requiredPermissions: ['view_quotation'],
     description: 'Quotations list and management'
   },
   '/app/quotations/new': {

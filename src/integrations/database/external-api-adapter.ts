@@ -466,17 +466,23 @@ export class ExternalAPIAdapter implements IDatabase {
             console.error(`❌ Network Error for ${action} on ${table || 'API'}:`, errorMessage);
             console.error(`API Endpoint: ${this.apiBase}`);
             console.error('🔍 Troubleshooting:');
-            console.error('1. CORS Issue (Most Common):');
+            console.error('1. CORS Issue (if cross-origin):');
             console.error('   - Backend needs: Access-Control-Allow-Origin header');
             console.error('   - Backend needs to allow methods: GET, POST, PUT, DELETE, OPTIONS');
-            console.error('2. Network/Connectivity:');
+            console.error('2. Authentication:');
+            console.error('   - Ensure user is logged in');
+            console.error('   - Check if auth token is present and valid');
+            console.error('   - Token may have expired');
+            console.error('3. Network/Connectivity:');
             console.error('   - Check if API endpoint is reachable');
             console.error('   - Verify internet connection');
-            console.error('3. Firewall/Proxy:');
+            console.error('4. Firewall/Proxy:');
             console.error('   - Check if network firewall blocks requests');
             console.error('   - Check if corporate proxy is interfering');
 
-            throw new Error(`Unable to reach API: ${this.apiBase}. This is commonly a CORS issue. Please ensure the backend has proper CORS headers configured. Error: ${errorMessage}`);
+            const errorDetail = `Unable to reach API: ${this.apiBase}. Error: ${errorMessage}`;
+            console.error(`\n${errorDetail}\n`);
+            throw new Error(errorDetail);
           }
 
           throw new Error(`Network error: ${errorMessage}`);
