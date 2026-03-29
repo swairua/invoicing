@@ -105,7 +105,7 @@ export default function Quotations() {
   
   // Get current user and company from context
   const { profile, loading: authLoading } = useAuth();
-  const { currentCompany } = useCurrentCompany();
+  const { currentCompany, isLoading: companyLoading } = useCurrentCompany();
   const { data: quotations, isLoading, error, refetch } = useQuotationsFixed(currentCompany?.id);
   const deleteQuotation = useDeleteQuotation();
   const convertToProforma = useConvertQuotationToProforma();
@@ -489,7 +489,7 @@ Email: ${companyEmail}`;
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isLoading || companyLoading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex items-center space-x-4 p-4">
