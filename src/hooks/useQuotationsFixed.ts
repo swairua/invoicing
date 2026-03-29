@@ -24,11 +24,25 @@ export const useQuotationsFixed = (companyId?: string) => {
       try {
         console.log('[useQuotationsFixed] Starting fetch for companyId:', companyId);
 
-        // Fetch quotations using the external API adapter
-        console.log('[useQuotationsFixed] Calling apiClient.select("quotations", {company_id:', companyId, '})');
-        const { data: quotations, error: quotationsError } = await apiClient.select('quotations', {
-          company_id: companyId
+        // Fetch ALL quotations first to see what's in the database
+        console.log('[useQuotationsFixed] Fetching ALL quotations (no filter) to debug...');
+        const { data: allQuotations, error: allError } = await apiClient.select('quotations', {});
+        console.log('[useQuotationsFixed] ALL quotations result:', {
+          error: allError?.message,
+          count: Array.isArray(allQuotations) ? allQuotations.length : 'not-array',
+          isArray: Array.isArray(allQuotations),
+          firstItem: Array.isArray(allQuotations) && allQuotations.length > 0 ? {
+            id: allQuotations[0].id,
+            quotation_number: allQuotations[0].quotation_number,
+            company_id: allQuotations[0].company_id,
+            customer_id: allQuotations[0].customer_id,
+          } : 'no-items'
         });
+
+        // Use unfiltered quotations for now to show all data
+        console.log('[useQuotationsFixed] Using unfiltered quotations (for debugging)');
+        const quotations = allQuotations;
+        const quotationsError = allError;
 
         console.log('[useQuotationsFixed] API response - Error:', quotationsError);
         console.log('[useQuotationsFixed] API response - Data type:', typeof quotations, 'Is Array:', Array.isArray(quotations));
