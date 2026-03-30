@@ -15,9 +15,9 @@ export const useQuotationsFixed = (companyId?: string) => {
       }
 
       // Verify user is authenticated before making API calls
-      const { user, error: authError } = await apiClient.auth.getSession();
-      if (authError || !user) {
-        console.warn('[useQuotationsFixed] User not authenticated:', authError?.message || 'No session');
+      const { session } = await apiClient.auth.getSession();
+      if (!session?.user) {
+        console.warn('[useQuotationsFixed] User not authenticated: No session');
         return [];
       }
 
