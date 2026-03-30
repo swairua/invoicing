@@ -775,8 +775,8 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
         </div>
         ` : ''}
 
-        <!-- Terms & Conditions (invoice only) -->
-        ${(data.type === 'invoice' || data.type === 'proforma') ? `
+        <!-- Terms & Conditions (invoice, proforma, and quotation) -->
+        ${(data.type === 'invoice' || data.type === 'proforma' || data.type === 'quotation') ? `
         <div class="notes-section">
           <div class="terms">
             <div class="section-subtitle">Terms &amp; Conditions</div>
