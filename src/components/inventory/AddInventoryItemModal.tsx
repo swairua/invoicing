@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateCategoryModalBasic } from '@/components/categories/CreateCategoryModalBasic';
+import { CreateUnitOfMeasureModal } from '@/components/inventory/CreateUnitOfMeasureModal';
 
 // Standard units of measure - no database lookup needed
 const STANDARD_UNITS = [
@@ -76,6 +77,8 @@ export function AddInventoryItemModal({ open, onOpenChange, onSuccess }: AddInve
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [showCreateUnit, setShowCreateUnit] = useState(false);
+  const [customUnits, setCustomUnits] = useState<Array<{ name: string; abbreviation: string }>>([]);
   const createProduct = useCreateProduct();
   const { currentCompany } = useCurrentCompany();
   const { provider } = useDatabase();
@@ -178,6 +181,14 @@ export function AddInventoryItemModal({ open, onOpenChange, onSuccess }: AddInve
   const handleCategoryCreated = (categoryId: string) => {
     handleInputChange('category_id', categoryId);
     setShowCreateCategory(false);
+  };
+
+  const handleUnitCreated = (unitId: string, unitName: string) => {
+    // Add to custom units list
+    setCustomUnits([...customUnits, { name: unitName, abbreviation: unitName.substring(0, 3).toUpperCase() }]);
+    // Automatically select the newly created unit
+    handleInputChange('unit_of_measure', unitName);
+    setShowCreateUnit(false);
   };
 
   const resetForm = () => {
@@ -297,7 +308,19 @@ export function AddInventoryItemModal({ open, onOpenChange, onSuccess }: AddInve
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="unit_of_measure">Unit of Measure</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="unit_of_measure">Unit of Measure</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCreateUnit(true)}
+                    className="h-auto p-1 text-xs text-primary hover:text-primary/80"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Create New
+                  </Button>
+                </div>
                 <Select value={formData.unit_of_measure || 'pieces'} onValueChange={(value) => handleInputChange('unit_of_measure', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select unit of measure" />
@@ -306,6 +329,11 @@ export function AddInventoryItemModal({ open, onOpenChange, onSuccess }: AddInve
                     {STANDARD_UNITS.map((unit) => (
                       <SelectItem key={unit.value} value={unit.value}>
                         {unit.label}
+                      </SelectItem>
+                    ))}
+                    {customUnits.map((unit) => (
+                      <SelectItem key={unit.name} value={unit.name}>
+                        {unit.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -420,6 +448,12 @@ export function AddInventoryItemModal({ open, onOpenChange, onSuccess }: AddInve
           open={showCreateCategory}
           onOpenChange={setShowCreateCategory}
           onSuccess={handleCategoryCreated}
+        />
+
+        <CreateUnitOfMeasureModal
+          open={showCreateUnit}
+          onOpenChange={setShowCreateUnit}
+          onSuccess={handleUnitCreated}
         />
       </DialogContent>
     </Dialog>

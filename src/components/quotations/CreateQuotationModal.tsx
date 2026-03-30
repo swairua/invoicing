@@ -22,15 +22,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Plus, 
-  Trash2, 
+import {
+  Plus,
+  Trash2,
   Search,
-  Calculator
+  Calculator,
+  Users,
+  Package
 } from 'lucide-react';
 import { useCustomers, useProducts, useGenerateDocumentNumber, useTaxSettings, useCompanies } from '@/hooks/useDatabase';
 import { useCreateQuotationWithItems } from '@/hooks/useQuotationItems';
 import { useAuth } from '@/contexts/AuthContext';
+import { CreateCustomerModal } from '@/components/customers/CreateCustomerModal';
+import { AddInventoryItemModal } from '@/components/inventory/AddInventoryItemModal';
+import { CreateCategoryModalBasic } from '@/components/categories/CreateCategoryModalBasic';
+import { CreateUnitOfMeasureModal } from '@/components/inventory/CreateUnitOfMeasureModal';
 import { toast } from 'sonner';
 
 interface QuotationItem {
@@ -72,6 +78,13 @@ The project will be delivered within one (1) month, provided all required conten
   const [searchProduct, setSearchProduct] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // State for inline creation modals
+  const [showCreateCustomer, setShowCreateCustomer] = useState(false);
+  const [showCreateProduct, setShowCreateProduct] = useState(false);
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
+  const [showCreateUnit, setShowCreateUnit] = useState(false);
+  const [customUnits, setCustomUnits] = useState<Array<{ id: string; name: string; abbreviation: string }>>([]);
+
   // Get current user and company from context
   const { profile, loading: authLoading } = useAuth();
   const { data: companies } = useCompanies();
@@ -90,6 +103,24 @@ The project will be delivered within one (1) month, provided all required conten
   // Get default tax rate
   const defaultTax = taxSettings?.find(tax => tax.is_default && tax.is_active);
   const defaultTaxRate = defaultTax?.rate || 16; // Fallback to 16% if no default is set
+
+  // Handlers for inline creation success
+  const handleCustomerCreated = () => {
+    // Customers will be refetched automatically by React Query
+    toast.success('Customer created successfully! It will appear in the list.');
+  };
+
+  const handleProductCreated = () => {
+    // Products will be refetched automatically by React Query
+    setSearchProduct(''); // Clear search to show new product
+    toast.success('Product created successfully! It will appear in the list.');
+  };
+
+  const handleUnitCreated = (unitId: string, unitName: string) => {
+    // Add to custom units list
+    setCustomUnits([...customUnits, { id: unitId, name: unitName, abbreviation: unitName }]);
+    toast.success('Unit of measure created successfully!');
+  };
 
   const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
@@ -422,7 +453,19 @@ The project will be delivered within one (1) month, provided all required conten
               <CardContent className="space-y-4">
                 {/* Customer Selection */}
                 <div className="space-y-2">
-                  <Label htmlFor="customer">Customer *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="customer">Customer *</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCreateCustomer(true)}
+                      className="h-6 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      New
+                    </Button>
+                  </div>
                   <Select value={selectedCustomerId || ''} onValueChange={setSelectedCustomerId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a customer" />
@@ -497,7 +540,31 @@ The project will be delivered within one (1) month, provided all required conten
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Add Products</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Add Products</span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCreateProduct(true)}
+                      className="h-8 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      New Product
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCreateCategory(true)}
+                      className="h-8 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Category
+                    </Button>
+                  </div>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -675,6 +742,31 @@ The project will be delivered within one (1) month, provided all required conten
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Inline Creation Modals */}
+      <CreateCustomerModal
+        open={showCreateCustomer}
+        onOpenChange={setShowCreateCustomer}
+        onSuccess={handleCustomerCreated}
+      />
+
+      <AddInventoryItemModal
+        open={showCreateProduct}
+        onOpenChange={setShowCreateProduct}
+        onSuccess={handleProductCreated}
+      />
+
+      <CreateCategoryModalBasic
+        open={showCreateCategory}
+        onOpenChange={setShowCreateCategory}
+        onSuccess={() => toast.success('Category created successfully!')}
+      />
+
+      <CreateUnitOfMeasureModal
+        open={showCreateUnit}
+        onOpenChange={setShowCreateUnit}
+        onSuccess={handleUnitCreated}
+      />
     </Dialog>
   );
 }
