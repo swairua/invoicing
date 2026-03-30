@@ -53,6 +53,12 @@ export function hasPermission(
     return false;
   }
 
+  // Admins bypass all permission checks
+  if (role.role_type === 'admin' || role.name?.toLowerCase() === 'admin') {
+    console.log(`✅ [hasPermission] Admin user has implicit permission: ${permission}`);
+    return true;
+  }
+
   if (!role.permissions) {
     console.warn(`🔐 [hasPermission] Role ${role.name} has no permissions array, permission check FAILED for: ${permission}`);
     return false;
@@ -81,6 +87,12 @@ export function hasAnyPermission(
   if (!role) {
     console.warn(`🔐 [hasAnyPermission] Role is null/undefined, checking permissions: ${permissions.join(', ')}`);
     return false;
+  }
+
+  // Admins bypass all permission checks
+  if (role.role_type === 'admin' || role.name?.toLowerCase() === 'admin') {
+    console.log(`✅ [hasAnyPermission] Admin user has implicit permissions: ${permissions.join(', ')}`);
+    return true;
   }
 
   if (!role.permissions) {
@@ -116,7 +128,17 @@ export function hasAllPermissions(
   role: RoleDefinition | null | undefined,
   permissions: Permission[]
 ): boolean {
-  if (!role || !role.permissions) {
+  if (!role) {
+    return false;
+  }
+
+  // Admins bypass all permission checks
+  if (role.role_type === 'admin' || role.name?.toLowerCase() === 'admin') {
+    console.log(`✅ [hasAllPermissions] Admin user has all implicit permissions: ${permissions.join(', ')}`);
+    return true;
+  }
+
+  if (!role.permissions) {
     return false;
   }
   return permissions.every(permission => role.permissions.includes(permission));
