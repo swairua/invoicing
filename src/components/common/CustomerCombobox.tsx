@@ -24,6 +24,7 @@ interface CustomerComboboxProps {
   placeholder?: string;
   label?: string;
   required?: boolean;
+  onAddCustomerClick?: () => void;
 }
 
 export function CustomerCombobox({
@@ -34,6 +35,7 @@ export function CustomerCombobox({
   placeholder = 'Select a customer',
   label = 'Customer',
   required = false,
+  onAddCustomerClick,
 }: CustomerComboboxProps) {
   const [open, setOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
@@ -105,6 +107,19 @@ export function CustomerCombobox({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0">
+          {onAddCustomerClick && (
+            <div className="p-2 border-b">
+              <button
+                onClick={() => {
+                  onAddCustomerClick();
+                  setOpen(false);
+                }}
+                className="w-full text-left px-2 py-2 text-sm font-medium text-primary hover:bg-muted rounded transition-colors"
+              >
+                + Create New Customer
+              </button>
+            </div>
+          )}
           <div className="p-2 border-b">
             <Input
               ref={searchInputRef}

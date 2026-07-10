@@ -12,13 +12,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { CustomerCombobox } from '@/components/common/CustomerCombobox';
+import { QuickAddCustomerModal } from '@/components/common/QuickAddCustomerModal';
+import { QuickAddProductModal } from '@/components/common/QuickAddProductModal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Plus, 
-  Trash2, 
+import {
+  Plus,
+  Trash2,
   Search,
   Calculator,
   FileText
@@ -58,6 +60,8 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
   const [items, setItems] = useState<QuotationItem[]>([]);
   const [searchProduct, setSearchProduct] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showQuickAddCustomer, setShowQuickAddCustomer] = useState(false);
+  const [showQuickAddProduct, setShowQuickAddProduct] = useState(false);
 
   const { data: companies } = useCompanies();
   const currentCompany = companies?.[0];
@@ -383,6 +387,7 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
                   placeholder="Select a customer"
                   label="Customer"
                   required
+                  onAddCustomerClick={() => setShowQuickAddCustomer(true)}
                 />
 
                 {/* Dates */}
@@ -451,6 +456,16 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
                       className="pl-10"
                     />
                   </div>
+
+                  {/* Create New Product Button */}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowQuickAddProduct(true)}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create New Product
+                  </Button>
 
                   {/* Product List */}
                   {searchProduct && (
@@ -645,6 +660,26 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Quick Add Modals */}
+      <QuickAddCustomerModal
+        open={showQuickAddCustomer}
+        onOpenChange={setShowQuickAddCustomer}
+        onSuccess={(newCustomer) => {
+          setSelectedCustomerId(newCustomer.id);
+          setShowQuickAddCustomer(false);
+        }}
+        companyId={currentCompany?.id || ''}
+      />
+      <QuickAddProductModal
+        open={showQuickAddProduct}
+        onOpenChange={setShowQuickAddProduct}
+        onSuccess={(newProduct) => {
+          addItem(newProduct);
+          setShowQuickAddProduct(false);
+        }}
+        companyId={currentCompany?.id || ''}
+      />
     </Dialog>
   );
 }
