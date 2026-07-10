@@ -491,6 +491,12 @@ export const generateCreditNotePDF = (creditNote: CreditNotePDFData, company?: C
                     <td class="label">Amount:</td>
                     <td class="value" style="font-weight: bold; color: #2BB673;">${formatCurrency(creditNote.total_amount)}</td>
                   </tr>
+                  ${creditNote.invoices?.invoice_number ? `
+                  <tr>
+                    <td class="label">Invoice:</td>
+                    <td class="value">${creditNote.invoices.invoice_number}</td>
+                  </tr>
+                  ` : ''}
                 </table>
               </div>
             </div>

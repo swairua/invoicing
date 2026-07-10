@@ -113,8 +113,7 @@ export function CreateCreditNoteModal({
   // Filter invoices for selected customer
   const customerInvoices = invoices?.filter(inv => 
     inv.customer_id === selectedCustomerId && 
-    inv.status !== 'cancelled' &&
-    (inv.balance_due || 0) > 0
+    inv.status !== 'cancelled'
   ) || [];
 
   // Handle pre-selected data
@@ -417,7 +416,7 @@ export function CreateCreditNoteModal({
                       ) : (
                         customers?.filter(c => c?.id).map((customer) => (
                           <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name} ({customer.customer_code})
+                            {customer.name}{customer.customer_number ? ` (${customer.customer_number})` : ''}
                           </SelectItem>
                         ))
                       )}
@@ -437,7 +436,7 @@ export function CreateCreditNoteModal({
                         <SelectItem value="none">No specific invoice</SelectItem>
                         {customerInvoices.filter(inv => inv?.id).map((invoice) => (
                           <SelectItem key={invoice.id} value={invoice.id}>
-                            {invoice.invoice_number} - {formatCurrency(invoice.balance_due || 0)} due
+                            {invoice.invoice_number} | {formatCurrency(invoice.total_amount || 0)} | Balance: {formatCurrency(invoice.balance_due || 0)}
                           </SelectItem>
                         ))}
                       </SelectContent>

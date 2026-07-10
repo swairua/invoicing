@@ -541,6 +541,7 @@ export const useConvertProformaToInvoice = () => {
       }
 
       // Create invoice from proforma
+      const totalAmount = modifiedData?.total_amount ?? proforma.total_amount;
       const invoiceData = {
         company_id: proforma.company_id,
         customer_id: proforma.customer_id,
@@ -550,7 +551,11 @@ export const useConvertProformaToInvoice = () => {
         status: 'sent',
         subtotal: modifiedData?.subtotal ?? proforma.subtotal,
         tax_amount: modifiedData?.tax_amount ?? proforma.tax_amount,
-        total_amount: modifiedData?.total_amount ?? proforma.total_amount,
+        total_amount: totalAmount,
+        paid_amount: 0,
+        balance_due: totalAmount,
+        terms_and_conditions: proforma.terms_and_conditions || '',
+        notes: proforma.notes || '',
         created_by: createdBy
       };
 

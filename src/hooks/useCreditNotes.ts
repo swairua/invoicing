@@ -261,10 +261,14 @@ export function useDeleteCreditNote() {
 
           if (!invoiceResult.error && invoiceResult.data) {
             const invoice = invoiceResult.data;
-            // Recalculate balance_due by adding back the allocated amount
+            // Recalculate balance_due and paid_amount by reversing the allocated amount
+            const newPaidAmount = (invoice.paid_amount || 0) - allocation.allocated_amount;
             const newBalanceDue = (invoice.balance_due || 0) + allocation.allocated_amount;
 
-            await db.update('invoices', allocation.invoice_id, { balance_due: newBalanceDue });
+            await db.update('invoices', allocation.invoice_id, {
+              paid_amount: Math.max(0, newPaidAmount),
+              balance_due: newBalanceDue
+            });
           }
         }
       }

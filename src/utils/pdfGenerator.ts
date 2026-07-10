@@ -57,6 +57,7 @@ export interface DocumentData {
   tax_amount?: number;
   total_amount: number;
   paid_amount?: number;
+  credit_note_total?: number;
   balance_due?: number;
   notes?: string;
   terms_and_conditions?: string;
@@ -99,18 +100,6 @@ const DEFAULT_COMPANY: CompanyDetails = {
   logo_url: 'https://cdn.builder.io/api/v1/image/assets%2Ffd1c9d5781fc4f20b6ad16683f5b85b3%2F274fc62c033e464584b0f50713695127?format=webp&width=800',
   primary_color: '#FF8C42'
 };
-
-// Default terms and conditions
-const DEFAULT_TERMS_TEXT = `
-  <div style="text-align:left; font-size:11px; color:#333; line-height:1.3; margin:0; padding:0;">
-    <ul style="margin:0; padding-left:20px; line-height:1.4;">
-      <li style="margin:0; padding:0; margin-bottom:4px;">A 50% deposit is required before project commencement.</li>
-      <li style="margin:0; padding:0; margin-bottom:4px;">The remaining 50% balance is payable upon project completion and before final deployment.</li>
-      <li style="margin:0; padding:0; margin-bottom:4px;">All payments must be made via Bank Transfer or M-Pesa.</li>
-      <li style="margin:0; padding:0;">The project will be delivered within one (1) month, provided all required content and approvals are submitted on time.</li>
-    </ul>
-  </div>
-`;
 
 // Helper function to determine which columns have values
 const analyzeColumns = (items: DocumentData['items']) => {
@@ -744,6 +733,12 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
               <td class="amount">${formatCurrency(data.total_amount)}</td>
             </tr>
             ${(data.type === 'invoice' || data.type === 'proforma') && data.paid_amount !== undefined ? `
+            ${data.credit_note_total ? `
+            <tr class="payment-info">
+              <td class="label">Credit Notes:</td>
+              <td class="amount" style="color: #2563EB;">-${formatCurrency(data.credit_note_total)}</td>
+            </tr>
+            ` : ''}
             <tr class="payment-info">
               <td class="label">Paid Amount:</td>
               <td class="amount" style="color: #2BB673;">${formatCurrency(data.paid_amount || 0)}</td>
@@ -775,12 +770,12 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
         </div>
         ` : ''}
 
-        <!-- Terms & Conditions (invoice only) -->
-        ${(data.type === 'invoice' || data.type === 'proforma') ? `
+        <!-- Terms & Conditions (invoice, proforma, quotation) -->
+        ${(data.type === 'invoice' || data.type === 'proforma' || data.type === 'quotation') ? `
         <div class="notes-section">
           <div class="terms">
             <div class="section-subtitle">Terms &amp; Conditions</div>
-            <div class="notes-content">${data.terms_and_conditions || DEFAULT_TERMS_TEXT}</div>
+            <div class="notes-content">${data.terms_and_conditions || ''}</div>
           </div>
         </div>
         ` : ''}
@@ -1103,6 +1098,7 @@ export const downloadInvoicePDF = async (invoice: any, documentType: 'INVOICE' |
     tax_amount: calculatedTaxAmount,
     total_amount: calculatedTotalAmount,
     paid_amount: paidAmount,
+    credit_note_total: Number(invoice.credit_note_total || 0),
     balance_due: calculatedBalanceDue,
     notes: invoice.notes,
     terms_and_conditions: invoice.terms_and_conditions,

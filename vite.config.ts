@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       host: "::",
-      port: 8080,
+      port: 5173,
       hmr: false,
       // SPA routing fallback: serve index.html for all non-file requests
       // This ensures page refresh works on nested routes without 404

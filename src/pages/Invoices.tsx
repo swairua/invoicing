@@ -37,11 +37,14 @@ import {
   Calendar,
   Receipt,
   Truck,
-  Trash2
+  Trash2,
+  FileText,
+  ScrollText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { useInvoicesFixed as useInvoices, useDeleteInvoice } from '@/hooks/useInvoicesFixed';
+import { useCreditNotes } from '@/hooks/useCreditNotes';
 import { toast } from 'sonner';
 import { parseErrorMessage } from '@/utils/errorHelpers';
 import { CreateInvoiceModal } from '@/components/invoices/CreateInvoiceModal';
@@ -144,6 +147,16 @@ export default function Invoices() {
   // Use the fixed invoices hook
   const { data: invoices, isLoading, error, refetch } = useInvoices(currentCompany?.id);
   const deleteInvoice = useDeleteInvoice();
+  const { data: creditNotes } = useCreditNotes(currentCompany?.id);
+
+  // Build map of invoice_id -> credit note info
+  const creditNotesByInvoice = (creditNotes || []).reduce((acc, cn: any) => {
+    if (cn.invoice_id) {
+      if (!acc[cn.invoice_id]) acc[cn.invoice_id] = [];
+      acc[cn.invoice_id].push(cn);
+    }
+    return acc;
+  }, {} as Record<string, any[]>);
 
   // Auto-reconcile invoices on component mount to fix any status mismatches
   useEffect(() => {
@@ -305,6 +318,10 @@ export default function Invoices() {
         pdf_footer_line2: currentCompany.pdf_footer_line2,
         pdf_footer_enabled_docs: currentCompany.pdf_footer_enabled_docs
       } : undefined;
+
+      // Attach credit note total for PDF display
+      const invCreditNotes = creditNotesByInvoice[invoice.id] || [];
+      enrichedInvoice.credit_note_total = invCreditNotes.reduce((sum: number, cn: any) => sum + (cn.total_amount || 0), 0);
 
       await downloadInvoicePDF(enrichedInvoice, 'INVOICE', companyDetails);
       toast.success(`PDF download started for ${invoice.invoice_number}`);
@@ -647,6 +664,7 @@ Email: ${currentCompany?.email || 'info@medplusafrica.com'}`;
                   <TableHead>Amount</TableHead>
                   <TableHead>Paid</TableHead>
                   <TableHead>Balance</TableHead>
+                  <TableHead>Credit Notes</TableHead>
                   <TableHead>Created By</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -686,6 +704,21 @@ Email: ${currentCompany?.email || 'info@medplusafrica.com'}`;
                     </TableCell>
                     <TableCell className={`font-medium ${(invoice.balance_due || 0) > 0 ? 'text-destructive' : 'text-success'}`}>
                       {formatCurrency(invoice.balance_due || 0)}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const invCreditNotes = creditNotesByInvoice[invoice.id];
+                        if (invCreditNotes && invCreditNotes.length > 0) {
+                          const totalCredited = invCreditNotes.reduce((sum: number, cn: any) => sum + (cn.total_amount || 0), 0);
+                          return (
+                            <div className="flex items-center gap-1" title={`${invCreditNotes.length} credit note(s) totaling ${formatCurrency(totalCredited)}`}>
+                              <ScrollText className="h-3.5 w-3.5 text-blue-500" />
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">{invCreditNotes.length}</span>
+                            </div>
+                          );
+                        }
+                        return <span className="text-xs text-muted-foreground">—</span>;
+                      })()}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">

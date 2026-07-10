@@ -330,6 +330,15 @@ export function useProducts(companyId?: string) {
   return { data, isLoading, error, retry, loadingTimeout };
 }
 
+export function useCategories(companyId?: string) {
+  const { provider } = useDatabase();
+  const filter = useMemo(() =>
+    companyId ? { company_id: companyId } : undefined,
+    [companyId]
+  );
+  return useSelect('product_categories', filter);
+}
+
 /**
  * Hook to create a new product
  */
