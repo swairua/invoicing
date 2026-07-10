@@ -11,13 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { CustomerCombobox } from '@/components/common/CustomerCombobox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -484,25 +478,15 @@ The project will be delivered within one (1) month, provided all required conten
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Customer Selection */}
-                <div className="space-y-2">
-                  <Label htmlFor="customer">Customer *</Label>
-                  <Select value={selectedCustomerId || ''} onValueChange={setSelectedCustomerId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingCustomers ? (
-                        <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading customers...</div>
-                      ) : (
-                        customers?.map((customer) => (
-                          <SelectItem key={customer.id} value={customer.id}>
-                            {customer.name}{customer.customer_code && ` (${customer.customer_code})`}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <CustomerCombobox
+                  customers={customers}
+                  selectedCustomerId={selectedCustomerId}
+                  onCustomerChange={setSelectedCustomerId}
+                  isLoading={loadingCustomers}
+                  placeholder="Select a customer"
+                  label="Customer"
+                  required
+                />
 
                 {/* Dates */}
                 <div className="grid grid-cols-2 gap-4">
