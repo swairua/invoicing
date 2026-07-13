@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Search, User, LogOut, LogIn, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle, isMobileMenuOpen }: HeaderProps) {
+  const navigate = useNavigate();
   const { user, profile, signOut, isAuthenticated } = useAuth();
   const [authModal, setAuthModal] = useState<'signin' | 'forgot' | null>(null);
 
@@ -154,12 +156,12 @@ export function Header({ onMenuToggle, isMobileMenuOpen }: HeaderProps) {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/app/settings/profile')}>
                     <User className="mr-2 h-4 w-4" />
                     Profile Settings
                   </DropdownMenuItem>
                   {profile?.role === 'admin' && (
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/app/settings/company')}>
                       Company Settings
                     </DropdownMenuItem>
                   )}

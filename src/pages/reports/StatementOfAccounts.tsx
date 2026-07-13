@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -12,39 +12,37 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Plus,
   Search,
   FileText,
   Download,
-  Calendar,
-  DollarSign,
-  Building2,
-  Users,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  ChevronRight,
 } from 'lucide-react';
 import { generateCustomerStatementPDF } from '@/utils/pdfGenerator';
+import { exportCustomerStatementsToCSV, exportCustomerStatementsToExcel, exportCustomerStatementSummaryToCSV } from '@/utils/csvExporter';
 import { toast } from 'sonner';
 import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { useCustomers, usePayments } from '@/hooks/useDatabase';
 import { useInvoicesFixed as useInvoices } from '@/hooks/useInvoicesFixed';
+import { useCreditNotes } from '@/hooks/useCreditNotes';
+import CustomerStatementPreviewModal from '@/components/statements/CustomerStatementPreviewModal';
 
-// Helper function to compute customer statements from real data
-const computeCustomerStatements = (customers: any[], invoices: any[], payments: any[]) => {
+const computeCustomerStatements = (customers: any[], invoices: any[], payments: any[], creditNotes: any[] = []) => {
   if (!customers || !invoices || !payments) return [];
 
   return customers.map(customer => {
-    // Get customer invoices
     const customerInvoices = invoices.filter(inv => inv.customer_id === customer.id);
-    const customerPayments = payments.filter(pay => pay.customer_id === customer.id);
+    const customerInvoiceIds = customerInvoices.map(inv => inv.id);
+    const customerPayments = payments.filter(pay => customerInvoiceIds.includes(pay.invoice_id));
+    const customerCreditNotes = creditNotes.filter(cn => cn.customer_id === customer.id);
 
-    // Calculate totals
     const totalInvoiced = customerInvoices.reduce((sum, inv) => sum + (Number(inv.total_amount) || 0), 0);
     const totalPaid = customerPayments.reduce((sum, pay) => sum + (Number(pay.amount) || 0), 0);
-    const currentBalance = totalInvoiced - totalPaid;
+    const totalCredited = customerCreditNotes.reduce((sum, cn) => sum + (Number(cn.total_amount) || 0), 0);
+    const currentBalance = totalInvoiced - totalPaid - totalCredited;
 
-    // Calculate aging analysis
     const today = new Date();
     let current = 0, days30 = 0, days60 = 0, days90 = 0;
 
@@ -61,7 +59,6 @@ const computeCustomerStatements = (customers: any[], invoices: any[], payments: 
 
     const overdueAmount = days30 + days60 + days90;
 
-    // Build transactions array
     const allTransactions = [
       ...customerInvoices.map(inv => ({
         date: inv.invoice_date,
@@ -70,7 +67,7 @@ const computeCustomerStatements = (customers: any[], invoices: any[], payments: 
         description: `Invoice - ${inv.invoice_number}`,
         debit: Number(inv.total_amount) || 0,
         credit: 0,
-        balance: 0 // Will be calculated
+        balance: 0
       })),
       ...customerPayments.map(pay => ({
         date: pay.payment_date,
@@ -79,11 +76,19 @@ const computeCustomerStatements = (customers: any[], invoices: any[], payments: 
         description: `Payment - ${pay.payment_method || 'Cash'}`,
         debit: 0,
         credit: Number(pay.amount) || 0,
-        balance: 0 // Will be calculated
+        balance: 0
+      })),
+      ...customerCreditNotes.map(cn => ({
+        date: cn.credit_note_date,
+        type: 'Credit Note',
+        reference: cn.credit_note_number,
+        description: `Credit Note - ${cn.credit_note_number}${cn.reason ? ` (${cn.reason})` : ''}`,
+        debit: 0,
+        credit: Number(cn.total_amount) || 0,
+        balance: 0
       }))
     ];
 
-    // Sort by date and calculate running balance
     allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     let runningBalance = 0;
     allTransactions.forEach(trans => {
@@ -102,14 +107,22 @@ const computeCustomerStatements = (customers: any[], invoices: any[], payments: 
       currentBalance: currentBalance,
       overdueAmount: overdueAmount,
       lastStatementDate: new Date().toISOString().split('T')[0],
-      transactions: allTransactions.slice(-10), // Show last 10 transactions
+      transactions: allTransactions.slice(-10),
       agingAnalysis: {
         current: current,
         days30: days30,
         days60: days60,
         days90: days90,
+        over90: days90,
         total: current + days30 + days60 + days90
-      }
+      },
+      invoiceCount: customerInvoices.length,
+      lastPaymentDate: customerPayments.length > 0
+        ? customerPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0]?.payment_date
+        : undefined,
+      lastPaymentAmount: customerPayments.length > 0
+        ? customerPayments.sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())[0]?.amount
+        : undefined,
     };
   });
 };
@@ -118,30 +131,36 @@ const StatementOfAccounts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<string>('all');
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
+  const [drillDownCustomer, setDrillDownCustomer] = useState<any>(null);
 
-  // Real data hooks
   const { currentCompany } = useCurrentCompany();
   const { data: customers } = useCustomers(currentCompany?.id);
   const { data: invoices } = useInvoices(currentCompany?.id);
   const { data: payments } = usePayments(currentCompany?.id);
+  const { data: creditNotes } = useCreditNotes(currentCompany?.id);
 
-  // Compute statements from real data
-  const computedStatements = computeCustomerStatements(customers || [], invoices || [], payments || []);
+  const computedStatements = computeCustomerStatements(customers || [], invoices || [], payments || [], creditNotes || []);
+
+  const filteredStatements = computedStatements.filter(statement => {
+    const matchesSearch = statement.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         statement.customerCode.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCustomer = selectedCustomer === 'all' || statement.customerId.toString() === selectedCustomer;
+    const matchesOverdue = !showOverdueOnly || statement.overdueAmount > 0;
+    return matchesSearch && matchesCustomer && matchesOverdue;
+  });
 
   const handleDownloadStatement = async (statement: any) => {
     try {
-      // Find the real customer in database
-      const customer = customers?.find(c => c.name === statement.customerName);
+      const customer = customers?.find(c => c.id === statement.customerId);
       if (!customer) {
         toast.error('Customer not found in database');
         return;
       }
 
-      // Get real invoices and payments for this customer
       const customerInvoices = invoices?.filter(inv => inv.customer_id === customer.id) || [];
       const customerPayments = payments?.filter(pay => pay.customer_id === customer.id) || [];
+      const customerCreditNotes = creditNotes?.filter(cn => cn.customer_id === customer.id) || [];
 
-      // Prepare company details for PDF
       const companyDetails = currentCompany ? {
         name: currentCompany.name,
         address: currentCompany.address,
@@ -155,8 +174,7 @@ const StatementOfAccounts = () => {
         pdf_template: currentCompany.pdf_template
       } : undefined;
 
-      // Generate PDF with real data
-      await generateCustomerStatementPDF(customer, customerInvoices, customerPayments, {
+      await generateCustomerStatementPDF(customer, customerInvoices, customerPayments, customerCreditNotes, {
         statement_date: new Date().toISOString().split('T')[0]
       }, companyDetails);
 
@@ -167,21 +185,47 @@ const StatementOfAccounts = () => {
     }
   };
 
-  const filteredStatements = computedStatements.filter(statement => {
-    const matchesSearch = statement.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         statement.customerCode.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCustomer = selectedCustomer === 'all' || statement.customerId.toString() === selectedCustomer;
-    const matchesOverdue = !showOverdueOnly || statement.overdueAmount > 0;
-    return matchesSearch && matchesCustomer && matchesOverdue;
-  });
+  const handleBulkExport = () => {
+    const data = filteredStatements.map(s => ({
+      customer_id: s.customerId,
+      customer_name: s.customerName,
+      customer_email: s.email,
+      total_outstanding: s.currentBalance,
+      current_due: s.agingAnalysis.current,
+      overdue_amount: s.overdueAmount,
+      days_overdue: 0,
+      last_payment_date: s.lastPaymentDate,
+      last_payment_amount: s.lastPaymentAmount,
+      invoice_count: s.invoiceCount,
+    }));
+    exportCustomerStatementsToCSV(data);
+    toast.success(`Exported ${data.length} customer statements to CSV`);
+  };
 
-  const getAccountStatus = (currentBalance: number, overdueAmount: number, creditLimit: number) => {
+  const handleExcelExport = () => {
+    const data = filteredStatements.map(s => ({
+      customer_id: s.customerId,
+      customer_name: s.customerName,
+      customer_email: s.email,
+      total_outstanding: s.currentBalance,
+      current_due: s.agingAnalysis.current,
+      overdue_amount: s.overdueAmount,
+      days_overdue: 0,
+      last_payment_date: s.lastPaymentDate,
+      last_payment_amount: s.lastPaymentAmount,
+      invoice_count: s.invoiceCount,
+    }));
+    exportCustomerStatementsToExcel(data);
+    toast.success(`Exported ${data.length} customer statements to Excel`);
+  };
+
+  const getStatusInfo = (currentBalance: number, overdueAmount: number, creditLimit: number) => {
     if (overdueAmount > 0) {
-      return { status: 'overdue', color: 'bg-destructive text-destructive-foreground', icon: AlertTriangle };
+      return { label: 'Overdue', color: 'bg-destructive text-destructive-foreground' };
     } else if (currentBalance > creditLimit * 0.8) {
-      return { status: 'near_limit', color: 'bg-warning text-warning-foreground', icon: Clock };
+      return { label: 'Near Limit', color: 'bg-warning text-warning-foreground' };
     } else {
-      return { status: 'good', color: 'bg-success text-success-foreground', icon: CheckCircle };
+      return { label: 'Good', color: 'bg-success text-success-foreground' };
     }
   };
 
@@ -193,8 +237,8 @@ const StatementOfAccounts = () => {
     }).format(amount);
   };
 
-  const totalOutstanding = filteredStatements.reduce((sum, statement) => sum + statement.currentBalance, 0);
-  const totalOverdue = filteredStatements.reduce((sum, statement) => sum + statement.overdueAmount, 0);
+  const totalOutstanding = filteredStatements.reduce((sum, s) => sum + s.currentBalance, 0);
+  const totalOverdue = filteredStatements.reduce((sum, s) => sum + s.overdueAmount, 0);
 
   return (
     <div className="space-y-6">
@@ -202,18 +246,35 @@ const StatementOfAccounts = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Statement of Accounts</h1>
-          <p className="text-muted-foreground">
-            Customer account statements and aging analysis
-          </p>
+          <p className="text-muted-foreground">Customer account statements and aging analysis</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleBulkExport}>
             <Download className="mr-2 h-4 w-4" />
-            Export All
+            Export CSV
           </Button>
-          <Button className="shadow-card">
-            <Plus className="mr-2 h-4 w-4" />
-            Generate Statements
+          <Button variant="outline" onClick={handleExcelExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Export Excel
+          </Button>
+          <Button variant="outline" onClick={() => {
+            const data = filteredStatements.map(s => ({
+              customer_id: s.customerId,
+              customer_name: s.customerName,
+              customer_email: s.email,
+              total_outstanding: s.currentBalance,
+              current_due: s.agingAnalysis.current,
+              overdue_amount: s.overdueAmount,
+              days_overdue: 0,
+              last_payment_date: s.lastPaymentDate,
+              last_payment_amount: s.lastPaymentAmount,
+              invoice_count: s.invoiceCount,
+            }));
+            exportCustomerStatementSummaryToCSV(data);
+            toast.success('Summary exported to CSV');
+          }}>
+            <FileText className="mr-2 h-4 w-4" />
+            Summary
           </Button>
         </div>
       </div>
@@ -223,7 +284,7 @@ const StatementOfAccounts = () => {
         <Card className="shadow-card">
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
-              <DollarSign className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold text-primary">KES</span>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Outstanding</p>
                 <p className="text-lg font-bold text-primary">{formatCurrency(totalOutstanding)}</p>
@@ -247,10 +308,10 @@ const StatementOfAccounts = () => {
         <Card className="shadow-card">
           <CardContent className="p-6">
             <div className="flex items-center space-x-2">
-              <Users className="h-8 w-8 text-secondary" />
+              <CheckCircle className="h-8 w-8 text-success" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Customers</p>
-                <p className="text-lg font-bold text-secondary">{filteredStatements.length}</p>
+                <p className="text-lg font-bold text-success">{filteredStatements.length}</p>
               </div>
             </div>
           </CardContent>
@@ -305,7 +366,7 @@ const StatementOfAccounts = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Button 
+            <Button
               variant={showOverdueOnly ? "default" : "outline"}
               onClick={() => setShowOverdueOnly(!showOverdueOnly)}
             >
@@ -316,161 +377,17 @@ const StatementOfAccounts = () => {
         </CardContent>
       </Card>
 
-      {/* Customer Statements List */}
+      {/* Customer Statements Table */}
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle>Customer Account Statements</CardTitle>
           <CardDescription>
-            Detailed account statements with aging analysis
+            Click a customer row to view detailed statement with full transactions
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {filteredStatements.map((statement) => {
-              const statusInfo = getAccountStatus(statement.currentBalance, statement.overdueAmount, statement.creditLimit);
-              const StatusIcon = statusInfo.icon;
-
-              return (
-                <Card key={statement.customerId} className="border-l-4 border-l-primary">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <Building2 className="h-8 w-8 text-primary" />
-                        <div>
-                          <h3 className="text-lg font-semibold">{statement.customerName}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {statement.customerCode} • {statement.email}
-                          </p>
-                          <p className="text-sm text-muted-foreground">{statement.address}</p>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-2">
-                        <Badge className={statusInfo.color}>
-                          <StatusIcon className="mr-1 h-3 w-3" />
-                          {statusInfo.status.replace('_', ' ').toUpperCase()}
-                        </Badge>
-                        <div className="space-x-2">
-                          <Button variant="outline" size="sm">
-                            <FileText className="mr-1 h-3 w-3" />
-                            View Statement
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadStatement(statement)}
-                          >
-                            <Download className="mr-1 h-3 w-3" />
-                            PDF
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Account Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-muted/30 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Current Balance</p>
-                        <p className="text-sm font-bold text-primary">{formatCurrency(statement.currentBalance)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Credit Limit</p>
-                        <p className="text-sm font-bold">{formatCurrency(statement.creditLimit)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Available Credit</p>
-                        <p className="text-sm font-bold text-success">
-                          {formatCurrency(statement.creditLimit - statement.currentBalance)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Overdue Amount</p>
-                        <p className={`text-sm font-bold ${statement.overdueAmount > 0 ? 'text-destructive' : 'text-success'}`}>
-                          {formatCurrency(statement.overdueAmount)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Aging Analysis */}
-                    <div className="mb-6">
-                      <h4 className="text-md font-semibold mb-3">Aging Analysis</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div className="text-center p-3 bg-success/10 rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">Current (0-30 days)</p>
-                          <p className="text-sm font-bold text-success">{formatCurrency(statement.agingAnalysis.current)}</p>
-                        </div>
-                        <div className="text-center p-3 bg-warning/10 rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">31-60 days</p>
-                          <p className="text-sm font-bold text-warning">{formatCurrency(statement.agingAnalysis.days30)}</p>
-                        </div>
-                        <div className="text-center p-3 bg-orange-100 rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">61-90 days</p>
-                          <p className="text-sm font-bold text-orange-600">{formatCurrency(statement.agingAnalysis.days60)}</p>
-                        </div>
-                        <div className="text-center p-3 bg-destructive/10 rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">90+ days</p>
-                          <p className="text-sm font-bold text-destructive">{formatCurrency(statement.agingAnalysis.days90)}</p>
-                        </div>
-                        <div className="text-center p-3 bg-primary/10 rounded-lg">
-                          <p className="text-sm font-medium text-muted-foreground">Total</p>
-                          <p className="text-sm font-bold text-primary">{formatCurrency(statement.agingAnalysis.total)}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Recent Transactions */}
-                    <div>
-                      <h4 className="text-md font-semibold mb-3">Recent Transactions</h4>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Reference</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead className="text-right">Debit</TableHead>
-                            <TableHead className="text-right">Credit</TableHead>
-                            <TableHead className="text-right">Balance</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {statement.transactions.map((transaction, index) => (
-                            <TableRow key={index}>
-                              <TableCell>
-                                <div className="flex items-center space-x-2">
-                                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  <span>{new Date(transaction.date).toLocaleDateString()}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={transaction.type === 'Payment' ? 'default' : 'secondary'}>
-                                  {transaction.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="font-medium">{transaction.reference}</TableCell>
-                              <TableCell>{transaction.description}</TableCell>
-                              <TableCell className="text-right text-destructive">
-                                {transaction.debit > 0 ? formatCurrency(transaction.debit) : ''}
-                              </TableCell>
-                              <TableCell className="text-right text-success">
-                                {transaction.credit > 0 ? formatCurrency(transaction.credit) : ''}
-                              </TableCell>
-                              <TableCell className="text-right font-medium">
-                                {formatCurrency(transaction.balance)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {filteredStatements.length === 0 && (
-            <div className="text-center py-8">
+        <CardContent className="p-0">
+          {filteredStatements.length === 0 ? (
+            <div className="text-center py-12">
               <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No customer statements found</h3>
               <p className="text-muted-foreground mb-4">
@@ -480,9 +397,97 @@ const StatementOfAccounts = () => {
                 }
               </p>
             </div>
+          ) : (
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Current</TableHead>
+                    <TableHead className="text-right">1-30d</TableHead>
+                    <TableHead className="text-right">31-60d</TableHead>
+                    <TableHead className="text-right">61-90d</TableHead>
+                    <TableHead className="text-right">90+d</TableHead>
+                    <TableHead className="text-right">Overdue</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead className="text-right">PDF</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredStatements.map((s) => {
+                    const statusInfo = getStatusInfo(s.currentBalance, s.overdueAmount, s.creditLimit);
+                    return (
+                      <TableRow
+                        key={s.customerId}
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setDrillDownCustomer(s)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div>
+                              <p className="font-medium">{s.customerName}</p>
+                              <p className="text-xs text-muted-foreground">{s.customerCode}{s.email ? ` • ${s.email}` : ''}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">{formatCurrency(s.currentBalance)}</TableCell>
+                        <TableCell className="text-right text-success">{formatCurrency(s.agingAnalysis.current)}</TableCell>
+                        <TableCell className="text-right text-warning">{formatCurrency(s.agingAnalysis.days30)}</TableCell>
+                        <TableCell className="text-right text-orange-600">{formatCurrency(s.agingAnalysis.days60)}</TableCell>
+                        <TableCell className="text-right text-destructive">{formatCurrency(s.agingAnalysis.days90)}</TableCell>
+                        <TableCell className="text-right text-destructive font-medium">{formatCurrency(s.overdueAmount)}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); handleDownloadStatement(s); }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              {/* Totals footer */}
+              <div className="border-t px-4 py-3 bg-muted/20">
+                <div className="flex justify-end space-x-8 text-sm font-medium">
+                  <span>Total Customers: <strong>{filteredStatements.length}</strong></span>
+                  <span>Outstanding: <strong className="text-primary">{formatCurrency(totalOutstanding)}</strong></span>
+                  <span>Overdue: <strong className="text-destructive">{formatCurrency(totalOverdue)}</strong></span>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
+
+      {/* Drill-down Modal */}
+      {drillDownCustomer && (
+        <CustomerStatementPreviewModal
+          isOpen={!!drillDownCustomer}
+          onClose={() => setDrillDownCustomer(null)}
+          customer={{
+            customer_id: drillDownCustomer.customerId,
+            customer_name: drillDownCustomer.customerName,
+            customer_email: drillDownCustomer.email,
+            total_outstanding: drillDownCustomer.currentBalance,
+            current_due: drillDownCustomer.agingAnalysis.current,
+            overdue_amount: drillDownCustomer.overdueAmount,
+            days_overdue: drillDownCustomer.overdueAmount > 0 ? 1 : 0,
+            last_payment_date: drillDownCustomer.lastPaymentDate,
+            last_payment_amount: drillDownCustomer.lastPaymentAmount,
+            invoice_count: drillDownCustomer.invoiceCount,
+          }}
+          statementDate={new Date().toISOString().split('T')[0]}
+        />
+      )}
     </div>
   );
 };

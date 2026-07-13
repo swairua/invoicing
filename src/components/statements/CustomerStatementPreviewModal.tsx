@@ -6,9 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Download, Send, X, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { usePayments, useCompanies } from '@/hooks/useDatabase';
 import { useInvoicesFixed as useInvoices } from '@/hooks/useInvoicesFixed';
+import { useCreditNotes } from '@/hooks/useCreditNotes';
 import { generateCustomerStatementPDF } from '@/utils/pdfGenerator';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface CustomerStatementPreviewModalProps {
   isOpen: boolean;
@@ -35,12 +35,16 @@ export default function CustomerStatementPreviewModal({
   statementDate = new Date().toISOString().split('T')[0]
 }: CustomerStatementPreviewModalProps) {
   const { data: companies } = useCompanies();
-  const { data: invoices } = useInvoices();
-  const { data: payments } = usePayments();
+  const companyId = companies?.[0]?.id;
+  const { data: invoices } = useInvoices(companyId);
+  const { data: payments } = usePayments(companyId);
+  const { data: creditNotes } = useCreditNotes(companyId);
 
-  // Get customer's invoices and payments
+  // Get customer's invoices, payments, and credit notes
   const customerInvoices = invoices?.filter(inv => inv.customer_id === customer.customer_id) || [];
-  const customerPayments = payments?.filter(pay => pay.customer_id === customer.customer_id) || [];
+  const customerInvoiceIds = customerInvoices.map(inv => inv.id);
+  const customerPayments = payments?.filter(pay => customerInvoiceIds.includes(pay.invoice_id)) || [];
+  const customerCreditNotes = creditNotes?.filter(cn => cn.customer_id === customer.customer_id) || [];
   
   // Get outstanding invoices
   const outstandingInvoices = customerInvoices.filter(inv => 
@@ -106,7 +110,7 @@ export default function CustomerStatementPreviewModal({
         logo_url: companies[0].logo_url
       } : undefined;
 
-      await generateCustomerStatementPDF(customerData, customerInvoices, customerPayments, {
+      await generateCustomerStatementPDF(customerData, customerInvoices, customerPayments, customerCreditNotes, {
         statement_date: statementDate
       }, companyDetails);
       
@@ -246,6 +250,39 @@ export default function CustomerStatementPreviewModal({
             </CardContent>
           </Card>
 
+          {/* Credit Notes */}
+          {customerCreditNotes.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Credit Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Credit Note #</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead>Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customerCreditNotes
+                      .sort((a, b) => new Date(b.credit_note_date).getTime() - new Date(a.credit_note_date).getTime())
+                      .map((cn) => (
+                        <TableRow key={cn.id}>
+                          <TableCell className="font-medium">{cn.credit_note_number}</TableCell>
+                          <TableCell>{new Date(cn.credit_note_date).toLocaleDateString()}</TableCell>
+                          <TableCell>{cn.reason || '-'}</TableCell>
+                          <TableCell className="text-success">-${Number(cn.total_amount || 0).toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Recent Payments */}
           {customerPayments.length > 0 && (
             <Card>
@@ -269,7 +306,7 @@ export default function CustomerStatementPreviewModal({
                       .map((payment) => (
                         <TableRow key={payment.id}>
                           <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
-                          <TableCell>${payment.amount.toFixed(2)}</TableCell>
+                          <TableCell>${Number(payment.amount || 0).toFixed(2)}</TableCell>
                           <TableCell className="capitalize">{payment.payment_method?.replace('_', ' ')}</TableCell>
                           <TableCell>{payment.reference_number || '-'}</TableCell>
                         </TableRow>

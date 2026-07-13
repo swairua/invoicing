@@ -162,23 +162,26 @@ export default function Customers() {
 
   const handleViewStatement = async (customer: Customer) => {
     try {
-      // Fetch real invoices and payments for this customer
+      // Fetch real invoices, payments, and credit notes for this customer
       const db = getDatabase();
-      const [invoicesResult, paymentsResult] = await Promise.all([
+      const [invoicesResult, allPaymentsResult, creditNotesResult] = await Promise.all([
         db.selectBy('invoices', { customer_id: customer.id, company_id: activeCompanyId }),
-        db.selectBy('payments', { customer_id: customer.id, company_id: activeCompanyId })
+        db.selectBy('payments', { company_id: activeCompanyId }),
+        db.selectBy('credit_notes', { customer_id: customer.id, company_id: activeCompanyId })
       ]);
 
       if (invoicesResult.error) throw invoicesResult.error;
-      if (paymentsResult.error) throw paymentsResult.error;
 
       const invoices = invoicesResult.data || [];
-      const payments = paymentsResult.data?.map((payment: any) => ({
+      const invoiceIds = invoices.map((inv: any) => inv.id);
+      const allPayments = allPaymentsResult.data?.map((payment: any) => ({
         ...payment,
         method: payment.payment_method || 'Cash'
       })) || [];
+      const payments = allPayments.filter((pay: any) => invoiceIds.includes(pay.invoice_id));
+      const creditNotes = creditNotesResult.data || [];
 
-      generateCustomerStatementPDF(customer, invoices, payments);
+      generateCustomerStatementPDF(customer, invoices, payments, creditNotes);
       toast.success(`Statement generated for ${customer.name}`);
     } catch (error) {
       console.error('Error generating statement:', error);

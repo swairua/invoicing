@@ -56,6 +56,7 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ error: Error | null }>;
   isAuthenticated: boolean;
   isAdmin: boolean;
   refreshProfile: () => Promise<void>;
@@ -489,6 +490,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [user]);
 
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    if (!user || !profile?.email) {
+      return { error: new Error('No user logged in') };
+    }
+
+    try {
+      const result = await apiClient.rpc('change_password', {
+        email: profile.email,
+        old_password: currentPassword,
+        new_password: newPassword,
+      });
+
+      if (result.error) {
+        logError('Error changing password:', result.error, { context: 'changePassword', userId: user.id });
+        setTimeout(() => toast.error('Failed to change password. Please verify your current password.'), 0);
+        return { error: new Error(result.error.message) };
+      }
+
+      setTimeout(() => toast.success('Password changed successfully'), 0);
+      return { error: null };
+    } catch (error) {
+      logError('Error changing password exception:', error, { context: 'changePassword', userId: user.id });
+      setTimeout(() => toast.error('Failed to change password'), 0);
+      return { error: error as Error };
+    }
+  }, [user, profile]);
+
   const refreshProfile = useCallback(async () => {
     if (!user) return;
 
@@ -523,6 +551,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signOut,
     resetPassword,
     updateProfile,
+    changePassword,
     isAuthenticated,
     isAdmin,
     refreshProfile,

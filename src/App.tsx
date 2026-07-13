@@ -24,6 +24,7 @@ import TradingPLReport from "./pages/reports/TradingPLReport";
 import TransportPLReport from "./pages/reports/TransportPLReport";
 import ConsolidatedPLReport from "./pages/reports/ConsolidatedPLReport";
 import CompanySettings from "./pages/settings/CompanySettings";
+import ProfileSettings from "./pages/settings/ProfileSettings";
 import UserManagement from "./pages/settings/UserManagement";
 import DatabaseRolesSettings from "./pages/settings/DatabaseRolesSettings";
 import RemittanceAdvice from "./pages/RemittanceAdvice";
@@ -464,6 +465,14 @@ const App = () => {
                 />
 
                 {/* Settings */}
+                <Route
+                  path="/app/settings/profile"
+                  element={
+                    <ProtectedRoute requireAuth={true}>
+                      <ProfileSettings />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/app/settings/company"
                   element={

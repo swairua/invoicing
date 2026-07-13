@@ -39,7 +39,7 @@ export function BiolegendLogo({
   const fallbackLogoUrl = '/fallback-logo.png';
   const fallbackLogoSvgUrl = '/fallback-logo.svg';
   const logoSrc = propLogoUrl || currentCompany?.logo_url || fallbackLogoUrl;
-  const companyName = propCompanyName || currentCompany?.name || 'MEDPLUS';
+  const companyName = propCompanyName || currentCompany?.name || '';
 
   return (
     <div className={cn("flex items-center space-x-3", className)}>
@@ -64,7 +64,7 @@ export function BiolegendLogo({
       </div>
 
       {/* Company Text */}
-      {showText && (
+      {showText && companyName && (
         <div className="flex flex-col">
           <span className={cn("font-bold text-primary", textSizeClasses[size])}>
             {companyName.split(' ')[0].toUpperCase()}

@@ -106,14 +106,20 @@ export function EnhancedLogin() {
         <Card className="w-full shadow-2xl border-2 border-white/80 backdrop-blur-sm">
           <CardHeader className="text-center space-y-4 sm:space-y-6 bg-gradient-to-b from-orange-50/50 to-transparent p-6 sm:p-8">
             {/* Animated Logo */}
-            <div className="mx-auto animate-bounce" style={{ animationDuration: '2s' }}>
+            <div className="mx-auto" style={{ animationDuration: '2s' }}>
               <div className="bg-gradient-to-br from-orange-500 to-amber-500 p-2 sm:p-3 rounded-2xl inline-block shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <BiolegendLogo
-                  size="lg"
-                  showText={false}
-                  logoUrl={company?.logo_url}
-                  companyName={company?.name}
-                />
+                {companyLoading ? (
+                  <div className="h-16 w-16 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+                  </div>
+                ) : (
+                  <BiolegendLogo
+                    size="lg"
+                    showText={false}
+                    logoUrl={company?.logo_url}
+                    companyName={company?.name}
+                  />
+                )}
               </div>
             </div>
 
@@ -268,7 +274,7 @@ export function EnhancedLogin() {
                 <span className="text-base sm:text-lg">💡</span> Having trouble logging in? Contact your administrator for assistance.
               </p>
               <p className="text-xs text-gray-500 font-medium">
-                {companyName} © 2025 - Secure Login
+                {companyLoading ? 'Loading...' : `${companyName} © 2025 - Secure Login`}
               </p>
             </div>
           </CardContent>

@@ -295,32 +295,39 @@ export default function OptimizedCustomers() {
 
   const handleViewStatement = useCallback(async (customer: OptimizedCustomer) => {
     try {
-      // Fetch real invoices and payments for this customer
-      const [invoicesResponse, paymentsResponse] = await Promise.all([
+      // Fetch real invoices, payments, and credit notes for this customer
+      const [invoicesResponse, allPaymentsResponse, creditNotesResponse] = await Promise.all([
         supabase
           .from('invoices')
-          .select('invoice_date, invoice_number, total_amount, due_date, status')
+          .select('id, invoice_date, invoice_number, total_amount, due_date, status')
           .eq('customer_id', customer.id)
           .eq('company_id', currentCompany?.id || '550e8400-e29b-41d4-a716-446655440000')
           .order('invoice_date', { ascending: true }),
         supabase
           .from('payments')
-          .select('payment_date, payment_number, amount, payment_method')
+          .select('payment_date, payment_number, amount, payment_method, invoice_id')
+          .eq('company_id', currentCompany?.id || '550e8400-e29b-41d4-a716-446655440000')
+          .order('payment_date', { ascending: true }),
+        supabase
+          .from('credit_notes')
+          .select('credit_note_date, credit_note_number, total_amount, reason')
           .eq('customer_id', customer.id)
           .eq('company_id', currentCompany?.id || '550e8400-e29b-41d4-a716-446655440000')
-          .order('payment_date', { ascending: true })
+          .order('credit_note_date', { ascending: true })
       ]);
 
       if (invoicesResponse.error) throw invoicesResponse.error;
-      if (paymentsResponse.error) throw paymentsResponse.error;
 
       const invoices = invoicesResponse.data || [];
-      const payments = paymentsResponse.data?.map(payment => ({
+      const invoiceIds = invoices.map(inv => inv.id);
+      const allPayments = allPaymentsResponse.data?.map(payment => ({
         ...payment,
         method: payment.payment_method || 'Cash'
       })) || [];
+      const payments = allPayments.filter(pay => invoiceIds.includes(pay.invoice_id));
+      const creditNotes = creditNotesResponse.data || [];
 
-      generateCustomerStatementPDF(customer, invoices, payments);
+      generateCustomerStatementPDF(customer, invoices, payments, creditNotes);
       toast.success(`Statement generated for ${customer.name}`);
     } catch (error) {
       console.error('Error generating statement:', error);

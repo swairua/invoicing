@@ -258,8 +258,11 @@ export default function UserManagement() {
                 variant="destructive"
                 size="sm"
                 onClick={async () => {
-                  const ok = window.confirm('Are you sure you want to promote all existing users to admin? This cannot be easily undone.');
-                  if (!ok) return;
+                  const confirmation = window.prompt('Type "CONFIRM" to promote ALL users to admin. This cannot be easily undone.');
+                  if (confirmation !== 'CONFIRM') {
+                    toast.error('Cancelled. Type CONFIRM to proceed.');
+                    return;
+                  }
                   const res = await promoteAllToAdmin();
                   if (res.success) {
                     toast.success(`Promoted ${res.count || 0} users to admin`);

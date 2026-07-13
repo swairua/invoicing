@@ -30,6 +30,7 @@ import {
 import { useCustomers, usePayments } from '@/hooks/useDatabase';
 import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { useInvoicesFixed as useInvoices } from '@/hooks/useInvoicesFixed';
+import { useCreditNotes } from '@/hooks/useCreditNotes';
 import { usePermissions } from '@/hooks/usePermissions';
 import { toast } from 'sonner';
 import { generateCustomerStatementPDF } from '@/utils/pdfGenerator';
@@ -63,6 +64,7 @@ export default function CustomerStatements() {
   const { data: customers } = useCustomers(currentCompany?.id);
   const { data: invoices } = useInvoices(currentCompany?.id);
   const { data: payments } = usePayments(currentCompany?.id);
+  const { data: creditNotes } = useCreditNotes(currentCompany?.id);
 
   const { can: canViewReports, can: canExportReports, loading: permissionsLoading } = usePermissions();
 
@@ -100,11 +102,16 @@ export default function CustomerStatements() {
     return customers.map(customer => {
       // Get customer invoices (apply date range filter)
       const customerInvoices = invoices.filter(inv => inv.customer_id === customer.id && invoiceInRange(inv));
+      const customerCreditNotes = creditNotes?.filter(cn => cn.customer_id === customer.id) || [];
 
       // Calculate totals
-      const totalOutstanding = customerInvoices.reduce((sum, inv) =>
+      const totalInvoiced = customerInvoices.reduce((sum, inv) =>
         sum + ((inv.total_amount || 0) - (inv.paid_amount || 0)), 0
       );
+      const totalCredited = customerCreditNotes.reduce((sum, cn) =>
+        sum + (Number(cn.total_amount) || 0), 0
+      );
+      const totalOutstanding = Math.max(0, totalInvoiced - totalCredited);
 
       // Calculate overdue amounts (invoices past due date)
       const today = new Date();
@@ -127,7 +134,8 @@ export default function CustomerStatements() {
       const currentDue = totalOutstanding - overdueAmount;
 
       // Get last payment info
-      const customerPayments = payments.filter(pay => pay.customer_id === customer.id);
+      const customerInvoiceIds = customerInvoices.map(inv => inv.id);
+      const customerPayments = payments.filter(pay => customerInvoiceIds.includes(pay.invoice_id));
       const lastPayment = customerPayments.sort((a, b) => 
         new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
       )[0];
@@ -243,7 +251,7 @@ export default function CustomerStatements() {
           const customerInvoices = invoices?.filter(inv => inv.customer_id === customer.id) || [];
           const customerPayments = payments?.filter(pay => pay.customer_id === customer.id) || [];
 
-          await generateCustomerStatementPDF(customer, customerInvoices, customerPayments, {
+          await generateCustomerStatementPDF(customer, customerInvoices, customerPayments, [], {
             statement_date: statementDate
           }, companyDetails);
         }
@@ -291,7 +299,7 @@ export default function CustomerStatements() {
           const customerInvoices = invoices?.filter(inv => inv.customer_id === customer.id) || [];
           const customerPayments = payments?.filter(pay => pay.customer_id === customer.id) || [];
 
-          await generateCustomerStatementPDF(customer, customerInvoices, customerPayments, {
+          await generateCustomerStatementPDF(customer, customerInvoices, customerPayments, [], {
             statement_date: statementDate
           }, companyDetails);
         }

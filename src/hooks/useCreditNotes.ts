@@ -250,6 +250,20 @@ export function useDeleteCreditNote() {
           }
 
           stockMovementsReversedCount = stockMovementsResult.data.length;
+
+          // Update product stock quantities for reversals
+          for (const reversal of reversals) {
+            try {
+              const rpcResult = await db.rpc('update_product_stock', {
+                product_uuid: reversal.product_id,
+                movement_type: reversal.movement_type,
+                quantity: Math.abs(reversal.quantity)
+              });
+              if (rpcResult.error) throw rpcResult.error;
+            } catch (stockUpdateError: any) {
+              console.error('Error updating product stock during deletion:', stockUpdateError);
+            }
+          }
         }
       }
 
@@ -265,9 +279,20 @@ export function useDeleteCreditNote() {
             const newPaidAmount = (invoice.paid_amount || 0) - allocation.allocated_amount;
             const newBalanceDue = (invoice.balance_due || 0) + allocation.allocated_amount;
 
+            // Recalculate invoice status
+            let newStatus: string;
+            if (newBalanceDue <= 0 || newPaidAmount >= (invoice.total_amount || 0)) {
+              newStatus = 'paid';
+            } else if (newPaidAmount > 0) {
+              newStatus = 'partial';
+            } else {
+              newStatus = 'draft';
+            }
+
             await db.update('invoices', allocation.invoice_id, {
               paid_amount: Math.max(0, newPaidAmount),
-              balance_due: newBalanceDue
+              balance_due: newBalanceDue,
+              status: newStatus
             });
           }
         }
