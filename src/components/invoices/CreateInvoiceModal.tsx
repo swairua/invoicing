@@ -130,7 +130,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, preSelectedC
       discount_before_vat: 0,
       tax_percentage: defaultTaxRate, // Auto-apply default tax rate
       tax_amount: 0,
-      tax_inclusive: true, // Default to tax inclusive for easier pricing
+      tax_inclusive: false,
       line_total: price
     };
 
@@ -143,7 +143,7 @@ export function CreateInvoiceModal({ open, onOpenChange, onSuccess, preSelectedC
     setSearchProduct('');
 
     // Show success message with calculated totals
-    toast.success(`Added "${product.name}" - ${formatCurrency(lineTotal)} (incl. tax)`);
+    toast.success(`Added "${product.name}" - ${formatCurrency(lineTotal)}`);
   };
 
   const calculateLineTotal = (item: InvoiceItem, quantity?: number, unitPrice?: number, discountPercentage?: number, taxPercentage?: number, taxInclusive?: boolean) => {
