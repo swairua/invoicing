@@ -21,6 +21,9 @@ ADD COLUMN IF NOT EXISTS lpo_number VARCHAR(100),
 ADD COLUMN IF NOT EXISTS affects_inventory BOOLEAN DEFAULT true,
 ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES profiles(id) ON DELETE SET NULL;
 
+ALTER TABLE invoices
+ADD COLUMN IF NOT EXISTS terms_and_conditions TEXT NULL;
+
 -- Update existing records with default values
 UPDATE invoices 
 SET paid_amount = COALESCE(paid_amount, 0),
@@ -41,7 +44,7 @@ SELECT
     column_default
 FROM information_schema.columns 
 WHERE table_name = 'invoices' 
-    AND column_name IN ('paid_amount', 'balance_due', 'lpo_number', 'affects_inventory', 'created_by')
+    AND column_name IN ('paid_amount', 'balance_due', 'lpo_number', 'affects_inventory', 'created_by', 'terms_and_conditions')
 ORDER BY column_name;
 
 -- Show table counts to confirm table exists
