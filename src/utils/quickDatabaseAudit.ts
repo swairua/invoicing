@@ -14,6 +14,7 @@ const CRITICAL_COLUMNS = [
   { table: 'lpo_items', column: 'unit_of_measure' },
   { table: 'delivery_note_items', column: 'unit_of_measure' },
   { table: 'invoices', column: 'lpo_number' },
+  { table: 'invoices', column: 'terms_and_conditions' },
   { table: 'delivery_notes', column: 'delivery_method' },
   { table: 'delivery_notes', column: 'tracking_number' },
   { table: 'delivery_notes', column: 'carrier' },

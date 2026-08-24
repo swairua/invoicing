@@ -29,6 +29,7 @@ import { useCustomers, useProducts, useTaxSettings } from '@/hooks/useDatabase';
 import { useUpdateInvoiceWithItems } from '@/hooks/useQuotationItems';
 import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
+import { parseErrorMessage } from '@/utils/errorHelpers';
 
 interface InvoiceItem {
   id: string;
@@ -254,11 +255,6 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
         if (taxInclusive && item.tax_percentage === 0) {
           newTaxPercentage = defaultTaxRate;
         }
-        // When unchecking VAT Inclusive, reset VAT to 0
-        if (!taxInclusive) {
-          newTaxPercentage = 0;
-        }
-
         const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, undefined, newTaxPercentage, taxInclusive);
         console.log(`VAT Inclusive changed for item ${itemId}:`, {
           taxInclusive,
@@ -351,7 +347,14 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
       onOpenChange(false);
     } catch (error) {
       console.error('Error updating invoice:', error);
-      toast.error('Failed to update invoice. Please try again.');
+      const errorMessage = parseErrorMessage(error);
+      const normalizedError = errorMessage.toLowerCase();
+
+      if (normalizedError.includes('terms_and_conditions') && normalizedError.includes('column')) {
+        toast.error('Invoice schema is missing terms and conditions. Run fix-invoice-columns.sql and try again.');
+      } else {
+        toast.error('Failed to update invoice. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
