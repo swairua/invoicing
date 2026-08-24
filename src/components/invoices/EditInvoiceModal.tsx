@@ -255,11 +255,6 @@ export function EditInvoiceModal({ open, onOpenChange, onSuccess, invoice }: Edi
         if (taxInclusive && item.tax_percentage === 0) {
           newTaxPercentage = defaultTaxRate;
         }
-        // When unchecking VAT Inclusive, reset VAT to 0
-        if (!taxInclusive) {
-          newTaxPercentage = 0;
-        }
-
         const { lineTotal, taxAmount } = calculateLineTotal(item, undefined, undefined, undefined, newTaxPercentage, taxInclusive);
         console.log(`VAT Inclusive changed for item ${itemId}:`, {
           taxInclusive,
