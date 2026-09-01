@@ -35,6 +35,7 @@ export default defineConfig(({ mode }) => {
   const apiEndpoint = apiUrl ? `${apiUrl}/api.php` : '/api.php';
 
   return {
+    base: '/',
     server: {
       host: "::",
       port: 5173,
