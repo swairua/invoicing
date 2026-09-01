@@ -14,6 +14,7 @@ import { handleAuthError } from '@/utils/authErrorHandler';
 export function SimpleLogin() {
   const { signIn, loading } = useAuth();
   const companyConfig = useCompanyConfig();
+  const companyDescription = companyConfig.description?.trim() || `Sign in to access ${companyConfig.name}`;
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -52,7 +53,7 @@ export function SimpleLogin() {
     if (error) {
       handleAuthError(error);
     } else {
-      toast.success('Welcome!');
+      toast.success(`Welcome to ${companyConfig.name}!`);
     }
   };
 
@@ -70,14 +71,19 @@ export function SimpleLogin() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto">
-            <BiolegendLogo size="lg" showText={false} logoUrl={companyConfig.logo_url} />
+            <BiolegendLogo
+              size="lg"
+              showText={false}
+              logoUrl={companyConfig.logo_url}
+              companyName={companyConfig.name}
+            />
           </div>
           <div className="space-y-2">
             <CardTitle className="text-2xl font-bold biolegend-brand">
               {companyConfig.name}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Sign in to access your business management system
+              {companyDescription}
             </p>
           </div>
         </CardHeader>
