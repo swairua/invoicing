@@ -37,30 +37,27 @@ export interface CompanyData {
   city?: string;
   country?: string;
   logo_url?: string;
+  primary_color?: string;
+  currency?: string;
 }
 
 // Default company details (fallback) - logo will be determined dynamically
 const DEFAULT_COMPANY: CompanyData = {
-  name: 'Medical Supplies',
-  address: '',
-  city: 'Nairobi',
-  country: 'Kenya',
-  phone: '',
-  email: 'info@medplusafrica.com',
-  logo_url: 'https://cdn.builder.io/api/v1/image/assets%2Ffd1c9d5781fc4f20b6ad16683f5b85b3%2F274fc62c033e464584b0f50713695127?format=webp&width=800'
+  name: 'Your Company',
+  logo_url: '/fallback-logo.svg',
+  primary_color: '#6B7280',
 };
 
 export const generateCreditNotePDF = (creditNote: CreditNotePDFData, company?: CompanyData) => {
   const companyData = company || DEFAULT_COMPANY;
 
-  // Get primary color from company settings, with fallback to orange
-  const primaryColor = (company as any)?.primary_color || '#FF8C42';
+  const primaryColor = companyData.primary_color || '#6B7280';
   const primaryColorLight = lightenColor(primaryColor, 25);
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
-      currency: 'KES',
+      currency: companyData.currency || 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);

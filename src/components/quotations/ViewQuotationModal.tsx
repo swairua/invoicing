@@ -33,7 +33,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { BiolegendLogo } from '@/components/ui/biolegend-logo';
-import { useCompanies } from '@/hooks/useDatabase';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { useDeleteQuotation } from '@/hooks/useQuotationItems';
 import { usePermissionGuards } from '@/hooks/usePermissionGuards';
 
@@ -69,9 +69,7 @@ export function ViewQuotationModal({
   const { canDeleteUI } = usePermissionGuards();
   const canDelete = canDeleteUI('quotation');
 
-  // Get company data for logo
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
 
   if (!quotation) return null;
 
@@ -101,7 +99,7 @@ export function ViewQuotationModal({
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
-      currency: 'KES',
+      currency: currentCompany?.currency || 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);
@@ -237,15 +235,7 @@ export function ViewQuotationModal({
                     {currentCompany.email && <div>Email: {currentCompany.email}</div>}
                     {currentCompany.website && <div>Website: {currentCompany.website}</div>}
                   </>
-                ) : (
-                  <>
-                    <div>P.O Box 85988-00200, Nairobi, Kenya</div>
-                    <div>Tel: 0741 207 690/0780 165 490</div>
-                    <div>Email: biolegend@biolegendscientific.co.ke/info@biolegendscientific.co.ke</div>
-                    <div>Website: www.biolegendscientific.co.ke</div>
-                    <div className="text-xs italic text-primary/70">Delivering Discoveries.... and more</div>
-                  </>
-                )}
+                ) : null}
               </div>
             </div>
             

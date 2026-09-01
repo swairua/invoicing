@@ -333,8 +333,10 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <div className="flex items-center space-x-3 px-3 py-2 text-sm text-sidebar-foreground">
               <Building2 className="h-4 w-4 text-sidebar-primary" />
               <div>
-                <div className="font-medium text-sm">{currentCompany?.name || '>> Medical Supplies'}</div>
-                <div className="text-xs text-sidebar-foreground/60">{currentCompany?.country || 'Kenya'}</div>
+                <div className="font-medium text-sm">{currentCompany?.name || 'Your Company'}</div>
+                {currentCompany?.country && (
+                  <div className="text-xs text-sidebar-foreground/60">{currentCompany.country}</div>
+                )}
               </div>
             </div>
           </div>
@@ -363,8 +365,10 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <div className="flex items-center space-x-3 px-3 py-2 text-sm text-sidebar-foreground">
               <Building2 className="h-4 w-4 text-sidebar-primary" />
               <div>
-                <div className="font-medium text-sm">{currentCompany?.name || '>> Medical Supplies'}</div>
-                <div className="text-xs text-sidebar-foreground/60">{currentCompany?.country || 'Kenya'}</div>
+                <div className="font-medium text-sm">{currentCompany?.name || 'Your Company'}</div>
+                {currentCompany?.country && (
+                  <div className="text-xs text-sidebar-foreground/60">{currentCompany.country}</div>
+                )}
               </div>
             </div>
           </div>

@@ -13,8 +13,9 @@ import { useWebManager, VariantImage } from '@/hooks/useWebManager';
 import { MessageCircle, ArrowLeft, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BreadcrumbNav } from '@/components/ui/breadcrumb-nav';
 import { useSEO } from '@/hooks/useSEO';
-import { generateProductSchema, SITE_CONFIG, useBreadcrumbSchema } from '@/utils/seoHelpers';
+import { generateProductSchema, useBreadcrumbSchema } from '@/utils/seoHelpers';
 import { openWhatsAppQuotation } from '@/utils/whatsappQuotation';
+import { useCompanyConfig } from '@/hooks/useCompanyConfig';
 import { VariantImagesModal } from '@/components/web-manager/VariantImagesModal';
 
 export default function ProductDetail() {
@@ -22,6 +23,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { fetchVariantImages } = useWebManager();
+  const companyConfig = useCompanyConfig();
 
   // Try to fetch as category first, then as variant
   const { category, variants } = useWebCategoryBySlug(productSlug || '');
@@ -70,7 +72,7 @@ export default function ProductDetail() {
       title: variant?.name || category?.name || 'Product',
       description: variant?.description || category?.description || 'Browse our product collection',
       keywords: `${variant?.name || category?.name}, medical supplies, healthcare`,
-      url: `${SITE_CONFIG.url}/products/${productSlug}`,
+      url: `/products/${productSlug}`,
       type: isCategory ? 'website' : 'product',
       image: variant?.image_path || undefined,
     },
@@ -78,16 +80,16 @@ export default function ProductDetail() {
       name: variant.name,
       description: variant.description || '',
       image: variant.image_path || '',
-      url: `${SITE_CONFIG.url}/products/${productSlug}`,
+      url: `/products/${productSlug}`,
       category: category?.name || '',
-    }) : undefined
+    }, companyConfig) : undefined
   );
 
   useBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Products', url: '/products' },
     { name: variant?.name || category?.name || 'Product', url: `/products/${productSlug}` }
-  ]);
+  ], companyConfig);
 
   const [quotationForm, setQuotationForm] = useState({
     quantity: '',
@@ -554,8 +556,8 @@ export default function ProductDetail() {
               Have questions about this product or need more information?
             </p>
             <p className="text-gray-600 mb-6">
-              Sales Email: <a href="mailto:sales@medplusafrica.com" className="text-primary hover:underline font-semibold">sales@medplusafrica.com</a><br />
-              Phone: <a href="tel:+254713416022" className="text-primary hover:underline font-semibold">+254 713 416 022</a>
+              {companyConfig.email && <>Sales Email: <a href={`mailto:${companyConfig.email}`} className="text-primary hover:underline font-semibold">{companyConfig.email}</a><br /></>}
+              {companyConfig.phone && <>Phone: <a href={`tel:${companyConfig.phone}`} className="text-primary hover:underline font-semibold">{companyConfig.phone}</a></>}
             </p>
             <Link to="/contact">
               <Button className="bg-primary hover:bg-primary/90 text-white font-semibold">

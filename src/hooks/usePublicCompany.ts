@@ -42,6 +42,16 @@ export function usePublicCompany(): UsePublicCompanyReturn {
     };
 
     loadCompany();
+
+    const handleRefresh = (event: Event) => {
+      const detail = (event as CustomEvent<{ table?: string }>).detail;
+      if (!detail?.table || detail.table === 'companies') {
+        loadCompany();
+      }
+    };
+
+    window.addEventListener('database:refresh', handleRefresh);
+    return () => window.removeEventListener('database:refresh', handleRefresh);
   }, []);
 
   return {

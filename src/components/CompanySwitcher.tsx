@@ -23,7 +23,7 @@ export function CompanySwitcher() {
         <Button variant="ghost" className="flex items-center space-x-2 px-3 h-auto">
           <Building className="h-4 w-4" />
           <span className="hidden sm:inline text-sm font-medium max-w-[150px] truncate">
-            {currentCompany?.company_name || 'Select Company'}
+            {currentCompany?.name || 'Select Company'}
           </span>
         </Button>
       </DropdownMenuTrigger>
@@ -36,7 +36,7 @@ export function CompanySwitcher() {
             onClick={() => switchCompany(company.id)}
             className="cursor-pointer flex items-center justify-between"
           >
-            <span>{company.company_name}</span>
+            <span>{company.name}</span>
             {currentCompany?.id === company.id && (
               <Check className="h-4 w-4 text-success" />
             )}

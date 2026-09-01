@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Download, Send, X, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import { usePayments, useCompanies } from '@/hooks/useDatabase';
+import { usePayments } from '@/hooks/useDatabase';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { useInvoicesFixed as useInvoices } from '@/hooks/useInvoicesFixed';
 import { useCreditNotes } from '@/hooks/useCreditNotes';
 import { generateCustomerStatementPDF } from '@/utils/pdfGenerator';
@@ -34,8 +35,8 @@ export default function CustomerStatementPreviewModal({
   customer,
   statementDate = new Date().toISOString().split('T')[0]
 }: CustomerStatementPreviewModalProps) {
-  const { data: companies } = useCompanies();
-  const companyId = companies?.[0]?.id;
+  const { currentCompany } = useCurrentCompany();
+  const companyId = currentCompany?.id;
   const { data: invoices } = useInvoices(companyId);
   const { data: payments } = usePayments(companyId);
   const { data: creditNotes } = useCreditNotes(companyId);
@@ -99,15 +100,17 @@ export default function CustomerStatementPreviewModal({
       };
       
       // Get current company details for PDF
-      const companyDetails = companies?.[0] ? {
-        name: companies[0].name,
-        address: companies[0].address,
-        city: companies[0].city,
-        country: companies[0].country,
-        phone: companies[0].phone,
-        email: companies[0].email,
-        tax_number: companies[0].tax_number,
-        logo_url: companies[0].logo_url
+      const companyDetails = currentCompany ? {
+        name: currentCompany.name,
+        address: currentCompany.address,
+        city: currentCompany.city,
+        country: currentCompany.country,
+        phone: currentCompany.phone,
+        email: currentCompany.email,
+        tax_number: currentCompany.tax_number,
+        logo_url: currentCompany.logo_url,
+        primary_color: currentCompany.primary_color,
+        currency: currentCompany.currency,
       } : undefined;
 
       await generateCustomerStatementPDF(customerData, customerInvoices, customerPayments, customerCreditNotes, {

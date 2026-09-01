@@ -179,15 +179,15 @@ export function ViewRemittanceModal({
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Building2 className="h-5 w-5 text-primary" />
-                <span>From: {currentCompany?.name || '>> Medical Supplies Limited'}</span>
+                <span>From: {currentCompany?.name || 'Your Company'}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div>{currentCompany?.address || 'P.O Box 85988-00200, Nairobi, Kenya'}</div>
-                <div>{currentCompany?.phone || 'Tel: 0741 207 690/0780 165 490'}</div>
-                <div>Email: {currentCompany?.email || 'info@medplusafrica.com'}</div>
-                <div>Country: {currentCompany?.country || 'Kenya'}</div>
+                {currentCompany?.address && <div>{currentCompany.address}</div>}
+                {currentCompany?.phone && <div>Tel: {currentCompany.phone}</div>}
+                {currentCompany?.email && <div>Email: {currentCompany.email}</div>}
+                {currentCompany?.country && <div>Country: {currentCompany.country}</div>}
                 <div className="text-xs italic text-primary/70">&nbsp;</div>
               </div>
             </CardContent>

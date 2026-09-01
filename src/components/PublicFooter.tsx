@@ -67,18 +67,20 @@ export const PublicFooter = ({ productCategories = [] }: PublicFooterProps) => {
               <address className="text-gray-300 space-y-3 text-sm not-italic">
                 <div>
                   <p className="font-semibold">{company.name}</p>
-                  <p>{company.address}</p>
-                  <p>{company.city}, {company.country}</p>
+                  {company.address && <p>{company.address}</p>}
+                  {(company.city || company.state || company.postal_code || company.country) && (
+                    <p>{[company.city, company.state, company.postal_code, company.country].filter(Boolean).join(', ')}</p>
+                  )}
                 </div>
-                <div>
-                  <p className="font-semibold mb-1">Phone:</p>
-                  <div className="space-y-2">
+                {company.phone && (
+                  <div>
+                    <p className="font-semibold mb-1">Phone:</p>
                     <div className="flex items-center gap-2">
                       <a href={`tel:${company.phone}`} className="hover:text-white transition-colors py-1 block" aria-label={`Call us at ${company.phone}`}>
                         {company.phone}
                       </a>
                       <a
-                        href={`https://api.whatsapp.com/send?phone=${company.phone?.replace(/\D/g, '')}&text=Hello%20${company.name}`}
+                        href={`https://api.whatsapp.com/send?phone=${company.phone.replace(/\D/g, '')}&text=Hello%20${encodeURIComponent(company.name)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Chat on WhatsApp"
@@ -89,15 +91,17 @@ export const PublicFooter = ({ productCategories = [] }: PublicFooterProps) => {
                       </a>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <p className="font-semibold mb-1">Email:</p>
-                  <p>
-                    <a href={`mailto:${company.email}`} className="hover:text-white transition-colors py-1 block" aria-label={`Email us at ${company.email}`}>
-                      {company.email}
-                    </a>
-                  </p>
-                </div>
+                )}
+                {company.email && (
+                  <div>
+                    <p className="font-semibold mb-1">Email:</p>
+                    <p>
+                      <a href={`mailto:${company.email}`} className="hover:text-white transition-colors py-1 block" aria-label={`Email us at ${company.email}`}>
+                        {company.email}
+                      </a>
+                    </p>
+                  </div>
+                )}
               </address>
             </div>
 
@@ -130,16 +134,18 @@ export const PublicFooter = ({ productCategories = [] }: PublicFooterProps) => {
                     Our Products
                   </Link>
                 </li>
-                <li>
-                  <a
-                    href="https://www.medplusafrica.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-white hover:translate-x-1 transition-all duration-200 inline-block py-1"
-                  >
-                    Visit Website
-                  </a>
-                </li>
+                {company.website && (
+                  <li>
+                    <a
+                      href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-white hover:translate-x-1 transition-all duration-200 inline-block py-1"
+                    >
+                      Visit Website
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
           </div>

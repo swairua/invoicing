@@ -78,12 +78,10 @@ export default function Contact() {
     }
   };
 
-  const { currentCompany } = useCurrentCompany();
-
   const handleEmailSubmit = async () => {
     try {
       const templateParams = {
-        to_email: currentCompany?.email || 'sales@medplusafrica.com',
+        to_email: companyConfig.email || '',
         from_name: formData.name,
         from_email: formData.email,
         phone: formData.phone,
@@ -137,7 +135,7 @@ ${formData.message}
 
 ━━━━━━━━━━━━━━━━━━━━━━`;
 
-      const whatsappPhone = currentCompany?.phone?.replace(/\D/g, '').slice(-12) || '254713416022';
+      const whatsappPhone = companyConfig.phone?.replace(/\D/g, '').slice(-12);
       const encodedMessage = encodeURIComponent(message);
       const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappPhone}&text=${encodedMessage}`;
 
@@ -339,46 +337,38 @@ ${formData.message}
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Contact Information</h2>
               <div className="space-y-6 sm:space-y-8">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Medplus Africa Limited</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{companyConfig.name}</h3>
                   <div className="text-gray-600 space-y-2 text-sm">
-                    <p>Siens Plaza River Road</p>
-                    <p>P.O BOX 45352 - 00100</p>
-                    <p>Nairobi, Kenya</p>
+                    {companyConfig.address && <p>{companyConfig.address}</p>}
+                    {(companyConfig.city || companyConfig.state || companyConfig.postal_code || companyConfig.country) && (
+                      <p>{[companyConfig.city, companyConfig.state, companyConfig.postal_code, companyConfig.country].filter(Boolean).join(', ')}</p>
+                    )}
                   </div>
                 </div>
 
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Contact Details</h3>
                   <div className="space-y-3">
-                    <p className="text-gray-600">
-                      <span className="font-semibold">Phone:</span>
-                    </p>
-                    <p className="text-gray-600 ml-4">
-                      <a href="tel:+254713416022" className="text-primary hover:underline">
-                        +254 713 416 022
-                      </a>
-                    </p>
-                    <p className="text-gray-600 ml-4">
-                      <a href="tel:+254786830610" className="text-primary hover:underline">
-                        +254 786 830 610
-                      </a>
-                    </p>
-                    <p className="text-gray-600 mt-3">
-                      <span className="font-semibold">Email:</span>
-                    </p>
-                    <p className="text-gray-600 ml-4">
-                      <a href="mailto:sales@medplusafrica.com" className="text-primary hover:underline">
-                        sales@medplusafrica.com
-                      </a>
-                    </p>
-                    <p className="text-gray-600 mt-3">
-                      <span className="font-semibold">Website:</span>
-                    </p>
-                    <p className="text-gray-600 ml-4">
-                      <a href="https://www.medplusafrica.com" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-                        www.medplusafrica.com
-                      </a>
-                    </p>
+                    {companyConfig.phone && (
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Phone: </span>
+                        <a href={`tel:${companyConfig.phone}`} className="text-primary hover:underline">{companyConfig.phone}</a>
+                      </p>
+                    )}
+                    {companyConfig.email && (
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Email: </span>
+                        <a href={`mailto:${companyConfig.email}`} className="text-primary hover:underline">{companyConfig.email}</a>
+                      </p>
+                    )}
+                    {companyConfig.website && (
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Website: </span>
+                        <a href={companyConfig.website.startsWith('http') ? companyConfig.website : `https://${companyConfig.website}`} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                          {companyConfig.website}
+                        </a>
+                      </p>
+                    )}
                   </div>
                 </div>
 

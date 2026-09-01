@@ -69,17 +69,20 @@ export default function CompanySettings() {
   const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [companyData, setCompanyData] = useState({
     name: '',
+    registration_number: '',
+    tax_number: '',
     email: '',
     phone: '',
     address: '',
     city: '',
     state: '',
     postal_code: '',
-    country: 'Kenya',
-    currency: 'KES',
+    country: '',
+    currency: '',
+    fiscal_year_start: 1,
     website: '',
     logo_url: '',
-    primary_color: '#FF8C42',
+    primary_color: '#6B7280',
     pdf_template: 'default',
     pdf_footer_line1: '',
     pdf_footer_line2: '',
@@ -142,15 +145,15 @@ export default function CompanySettings() {
         city: currentCompany.city || '',
         state: currentCompany.state || '',
         postal_code: currentCompany.postal_code || '',
-        country: currentCompany.country || 'Kenya',
-        currency: currentCompany.currency || 'KES',
+        country: currentCompany.country || '',
+        currency: currentCompany.currency || '',
         fiscal_year_start: currentCompany.fiscal_year_start || 1,
         logo_url: currentCompany.logo_url || '',
-        primary_color: currentCompany.primary_color || '#FF8C42',
+        primary_color: currentCompany.primary_color || '#6B7280',
         pdf_template: currentCompany.pdf_template || 'default',
         website: currentCompany.website || '',
-        pdf_footer_line1: currentCompany.pdf_footer_line1 || 'Mail:sales@heal.co.ke| info@heal.co.ke, Tel:+254 207 863 782 | +254 721 697 123',
-        pdf_footer_line2: currentCompany.pdf_footer_line2 || 'Naivasha Road, Kamrose Plaza, 1st Flr, Rm 14, P.O Box 61214-00200, Nairobi',
+        pdf_footer_line1: currentCompany.pdf_footer_line1 || '',
+        pdf_footer_line2: currentCompany.pdf_footer_line2 || '',
         pdf_footer_enabled_docs: Array.isArray(currentCompany.pdf_footer_enabled_docs)
           ? currentCompany.pdf_footer_enabled_docs
           : typeof currentCompany.pdf_footer_enabled_docs === 'string' && currentCompany.pdf_footer_enabled_docs.trim()
@@ -370,9 +373,9 @@ export default function CompanySettings() {
         city: companyData.city?.trim() || null,
         state: companyData.state?.trim() || null,
         postal_code: companyData.postal_code?.trim() || null,
-        country: companyData.country?.trim() || 'Kenya',
+        country: companyData.country?.trim() || null,
         logo_url: companyData.logo_url?.trim() || null,
-        primary_color: companyData.primary_color?.trim() || '#FF8C42',
+        primary_color: companyData.primary_color?.trim() || null,
         pdf_template: companyData.pdf_template?.trim() || 'default',
         pdf_footer_line1: companyData.pdf_footer_line1?.trim() || null,
         pdf_footer_line2: companyData.pdf_footer_line2?.trim() || null,
@@ -380,12 +383,8 @@ export default function CompanySettings() {
       };
 
       // Include optional fields that exist in the schema
-      if (companyData.website?.trim()) {
-        sanitizedData.website = companyData.website.trim();
-      }
-      if (companyData.currency?.trim()) {
-        sanitizedData.currency = companyData.currency.trim();
-      }
+      sanitizedData.website = companyData.website?.trim() || null;
+      sanitizedData.currency = companyData.currency?.trim() || null;
       if (companyData.registration_number?.trim()) {
         sanitizedData.registration_number = companyData.registration_number.trim();
       }
