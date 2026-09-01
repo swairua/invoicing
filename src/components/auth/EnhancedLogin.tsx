@@ -29,8 +29,9 @@ export function EnhancedLogin() {
     console.warn('Failed to load company information:', companyError);
   }
 
-  // Get company name from fetched data, fallback to default if not available
   const companyName = company?.name || 'Your Company';
+  const companyDescription = company?.description?.trim() || `Sign in to access ${companyName}`;
+  const currentYear = new Date().getFullYear();
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -137,7 +138,7 @@ export function EnhancedLogin() {
                 </CardTitle>
               )}
               <p className="text-sm sm:text-base text-gray-600 font-medium">
-                💼 Sign in to access your business management system
+                {companyDescription}
               </p>
             </div>
 
@@ -274,7 +275,7 @@ export function EnhancedLogin() {
                 <span className="text-base sm:text-lg">💡</span> Having trouble logging in? Contact your administrator for assistance.
               </p>
               <p className="text-xs text-gray-500 font-medium">
-                {companyLoading ? 'Loading...' : `${companyName} © 2025 - Secure Login`}
+                {companyLoading ? 'Loading...' : `© ${currentYear} ${companyName}. All rights reserved.`}
               </p>
             </div>
           </CardContent>
