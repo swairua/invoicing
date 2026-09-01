@@ -18,7 +18,7 @@ export class APITestSuite {
   private apiUrl: string;
   private results: TestResult[] = [];
 
-  constructor(apiUrl: string = import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php') {
+  constructor(apiUrl: string = import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php') {
     this.apiUrl = apiUrl;
   }
 

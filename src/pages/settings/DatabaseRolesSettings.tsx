@@ -57,7 +57,7 @@ interface RolesCheckResult {
   error?: string;
 }
 
-const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php';
+const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
 
 export default function DatabaseRolesSettings() {
   // Database States

@@ -3,7 +3,7 @@
 ## 🔴 Issue #1: CORS Error (Primary Blocker)
 
 ### What's Happening
-When users try to log in, the browser blocks the request because the API at `https://med.wayrus.co.ke/api.php` doesn't send CORS headers.
+When users try to log in, the browser blocks the request because the API at `https://diagsolutionsltd.com/api.php` doesn't send CORS headers.
 
 **Error Message:**
 ```

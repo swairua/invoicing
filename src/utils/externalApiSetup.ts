@@ -172,7 +172,7 @@ export async function initializeExternalAPI(options: SetupOptions = {}): Promise
  */
 export async function checkAdminExists(options: SetupOptions = {}): Promise<boolean> {
   const apiUrl =
-    options.apiUrl || import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php';
+    options.apiUrl || import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
   const email = options.email || 'admin@mail.com';
   const password = options.password || 'Pass123';
 
@@ -209,7 +209,7 @@ export async function createUserViaAPI(
   options: SetupOptions = {}
 ): Promise<SetupResult> {
   const apiUrl =
-    options.apiUrl || import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php';
+    options.apiUrl || import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
   const { onProgress } = options;
 
   // Always use the direct URL (no proxy) for consistency across all environments
@@ -260,7 +260,7 @@ export async function createUserViaAPI(
  */
 export async function getDatabaseInfo(options: SetupOptions = {}): Promise<any> {
   const apiUrl =
-    options.apiUrl || import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php';
+    options.apiUrl || import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
 
   // Always use the direct URL (no proxy) for consistency across all environments
   const fetchUrl = apiUrl.includes('/api.php') ? apiUrl : apiUrl + '/api.php';

@@ -384,5 +384,5 @@ Copy this info and use it to debug the backend.
 
 If after checking all of these the issue persists:
 1. Check the backend API logs for the actual error message
-2. Verify the 'med.wayrus.co.ke' API is running and configured correctly
+2. Verify the 'diagsolutionsltd.com' API is running and configured correctly
 3. Check network tab in browser DevTools to see exact API response

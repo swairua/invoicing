@@ -23,7 +23,7 @@ export default function AdminInitExternal() {
   const [customPassword, setCustomPassword] = useState('Pass123');
   const [apiUrl, setApiUrl] = useState(() => {
     // Always use the new API endpoint, ensure it ends with /api.php
-    const url = 'https://med.wayrus.co.ke';
+    const url = 'https://diagsolutionsltd.com';
     return url.endsWith('/api.php') ? url : url + '/api.php';
   });
   const [showDiagnostics, setShowDiagnostics] = useState(false);
@@ -169,7 +169,7 @@ export default function AdminInitExternal() {
                   onChange={e => setApiUrl(e.target.value)}
                   disabled={initializing || adminExists}
                   className="mt-2"
-                  placeholder="https://med.wayrus.co.ke/api.php"
+                  placeholder="https://diagsolutionsltd.com/api.php"
                 />
               </div>
               {databaseInfo && (

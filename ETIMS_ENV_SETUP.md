@@ -14,8 +14,8 @@ Create a `.env` file in your project root:
 
 ```env
 # API Configuration
-VITE_API_URL=https://med.wayrus.co.ke
-VITE_EXTERNAL_API_URL=https://med.wayrus.co.ke/api.php
+VITE_API_URL=https://diagsolutionsltd.com
+VITE_EXTERNAL_API_URL=https://diagsolutionsltd.com/api.php
 ```
 
 **OR for local development:**
@@ -38,8 +38,8 @@ your-project/
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `VITE_API_URL` | Base URL of your API | `https://med.wayrus.co.ke` |
-| `VITE_EXTERNAL_API_URL` | Direct PHP API endpoint | `https://med.wayrus.co.ke/api.php` |
+| `VITE_API_URL` | Base URL of your API | `https://diagsolutionsltd.com` |
+| `VITE_EXTERNAL_API_URL` | Direct PHP API endpoint | `https://diagsolutionsltd.com/api.php` |
 
 ---
 
@@ -93,14 +93,14 @@ cp .env.example .env
 
 Edit `.env`:
 ```env
-VITE_API_URL=https://med.wayrus.co.ke
+VITE_API_URL=https://diagsolutionsltd.com
 ```
 
 ### 2. Backend (.env on server)
 
 **SSH into your server:**
 ```bash
-ssh user@med.wayrus.co.ke
+ssh user@diagsolutionsltd.com
 cd /home/wayrusc1/med.wayrus.co.ke
 cp .env.example .env
 nano .env  # or vim, edit with your values
@@ -120,13 +120,13 @@ ETIMS_SANDBOX_API_KEY=get-from-kra
 1. Press `F12` to open developer tools
 2. Go to Console tab
 3. Type: `window.location.origin`
-4. Should show: `https://med.wayrus.co.ke` or `http://localhost:8000`
+4. Should show: `https://diagsolutionsltd.com` or `http://localhost:8000`
 
 ### 4. Test API Connection
 
 **Test the status endpoint (no auth needed):**
 ```bash
-curl https://med.wayrus.co.ke/api?action=etims_status
+curl https://diagsolutionsltd.com/api?action=etims_status
 ```
 
 Should return:
@@ -221,8 +221,8 @@ const API_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 **Solution:**
 ```
-Check: https://med.wayrus.co.ke/api?action=etims_status
-Not: https://med.wayrus.co.ke//api or https://med.wayrus.co.ke/api.php?action=
+Check: https://diagsolutionsltd.com/api?action=etims_status
+Not: https://diagsolutionsltd.com//api or https://diagsolutionsltd.com/api.php?action=
 ```
 
 ### Configuration Incomplete Error
@@ -281,7 +281,7 @@ cat .env | grep VITE_API_URL
 
 ```bash
 # 1. Create backend .env
-ssh user@med.wayrus.co.ke << 'EOF'
+ssh user@diagsolutionsltd.com << 'EOF'
 cd /home/wayrusc1/med.wayrus.co.ke
 cat > .env << 'CONFIG'
 ETIMS_ENV=sandbox
@@ -293,10 +293,10 @@ chmod 600 .env
 EOF
 
 # 2. Create frontend .env locally
-echo "VITE_API_URL=https://med.wayrus.co.ke" > .env
+echo "VITE_API_URL=https://diagsolutionsltd.com" > .env
 
 # 3. Test
-curl https://med.wayrus.co.ke/api?action=etims_status
+curl https://diagsolutionsltd.com/api?action=etims_status
 ```
 
 ---

@@ -1,6 +1,6 @@
 /**
  * Unified API Client
- * Direct integration with https://med.wayrus.co.ke/api.php
+ * Direct integration with https://diagsolutionsltd.com/api.php
  * Replaces all Supabase calls
  */
 

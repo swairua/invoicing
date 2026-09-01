@@ -109,7 +109,7 @@ ls -la public/api.php  # Should contain eTIMS endpoints
 
 **Test 1: Status Endpoint (Public)**
 ```bash
-curl -X GET "http://med.wayrus.co.ke/api?action=etims_status" \
+curl -X GET "http://diagsolutionsltd.com/api?action=etims_status" \
   -H "Content-Type: application/json"
 ```
 
@@ -134,7 +134,7 @@ Expected response:
 
 **Test 2: List Submissions (Requires Auth)**
 ```bash
-curl -X GET "http://med.wayrus.co.ke/api?action=etims_submissions_list" \
+curl -X GET "http://diagsolutionsltd.com/api?action=etims_submissions_list" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json"
 ```
@@ -176,7 +176,7 @@ export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost';
 
 In your `.env` or `.env.local`:
 ```env
-REACT_APP_API_URL=http://med.wayrus.co.ke
+REACT_APP_API_URL=http://diagsolutionsltd.com
 ```
 
 ---

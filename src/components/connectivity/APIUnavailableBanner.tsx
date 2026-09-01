@@ -124,7 +124,7 @@ export function APIUnavailableBanner({ onRetry, visible = true }: APIUnavailable
           <div className="space-y-1 text-xs opacity-75 mt-2 pt-2 border-t border-destructive/50">
             <p>
               <strong>Backend URL:</strong>{' '}
-              {import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php'}
+              {import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php'}
             </p>
             <p>
               <strong>Using Proxy:</strong> {window.location.href.includes('localhost') ? 'No (dev mode)' : 'Yes'}

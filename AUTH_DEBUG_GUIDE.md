@@ -142,7 +142,7 @@ Then a detailed diagnostic report will appear.
 
 ### Step 3: Check API Server
 Verify that:
-1. API server is running (`https://med.wayrus.co.ke/api.php`)
+1. API server is running (`https://diagsolutionsltd.com/api.php`)
 2. API server is accessible from your network
 3. API server is properly validating tokens
 4. Token refresh endpoint exists (or fallback to check_auth)

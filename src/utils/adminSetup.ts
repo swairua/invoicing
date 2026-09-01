@@ -1,9 +1,9 @@
 /**
  * Admin Setup Utility - External API Version
- * Uses med.wayrus.co.ke/api.php for admin user creation
+ * Uses diagsolutionsltd.com/api.php for admin user creation
  */
 
-const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php';
+const EXTERNAL_API_URL = import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
 
 export interface CreateAdminOptions {
   email: string;

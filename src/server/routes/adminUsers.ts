@@ -10,7 +10,7 @@ const API_AUTH_TOKEN = process.env.API_AUTH_TOKEN || '';
 
 /**
  * API Route Handler for creating users
- * Calls the external API (med.wayrus.co.ke/api.php)
+ * Calls the external API (diagsolutionsltd.com/api.php)
  *
  * Usage:
  * POST /api/admin/users/create
@@ -65,7 +65,7 @@ export async function handleCreateUser(body: any) {
 
 /**
  * API Route Handler for password reset
- * Calls the external API (med.wayrus.co.ke/api.php)
+ * Calls the external API (diagsolutionsltd.com/api.php)
  *
  * Usage:
  * POST /api/admin/users/reset-password
@@ -110,7 +110,7 @@ export async function handleResetPassword(body: any) {
 
 /**
  * API Route Handler for fixing profile RLS
- * Calls the external API (med.wayrus.co.ke/api.php)
+ * Calls the external API (diagsolutionsltd.com/api.php)
  *
  * Usage:
  * POST /api/admin/database/fix-rls

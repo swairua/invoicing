@@ -1,6 +1,6 @@
 /**
  * External MySQL API Adapter
- * Communicates with med.wayrus.co.ke/api.php MySQL backend
+ * Communicates with diagsolutionsltd.com/api.php MySQL backend
  */
 
 import type {

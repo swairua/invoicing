@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Default values
-API_URL="${API_URL:-https://med.wayrus.co.ke/api.php}"
+API_URL="${API_URL:-https://diagsolutionsltd.com/api.php}"
 ADMIN_EMAIL="${ADMIN_EMAIL:-admin@biolegend.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-Biolegend2024!Admin}"
 DRY_RUN=false
@@ -41,7 +41,7 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: ./setup-external-api.sh [options]"
       echo ""
       echo "Options:"
-      echo "  --api-url URL         API endpoint URL (default: https://helixgeneralhardware.com/api.php)"
+      echo "  --api-url URL         API endpoint URL (default: https://diagsolutionsltd.com/api.php)"
       echo "  --email EMAIL         Admin email (default: admin@biolegend.local)"
       echo "  --password PASSWORD   Admin password (default: Biolegend2024!Admin)"
       echo "  --dry-run            Show what would be done without actually doing it"

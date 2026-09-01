@@ -59,7 +59,7 @@ export function AuthorizationDiagnostics() {
         return;
       }
 
-      const apiUrl = import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php';
+      const apiUrl = import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
       const response = await fetch(`${apiUrl}?action=diagnose_authorization`, {
         method: 'GET',
         headers: {

@@ -2,7 +2,7 @@
  * DATABASE SETUP MODULE - DISABLED
  *
  * This module attempted to set up database schema using Supabase RPC functions,
- * which are not available when using external MySQL API (med.wayrus.co.ke).
+ * which are not available when using external MySQL API (diagsolutionsltd.com).
  * 
  * Database schema is now managed through:
  * 1. Backend API automatic table creation (public/api.php ensureTables())

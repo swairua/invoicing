@@ -25,8 +25,8 @@ export default defineConfig(({ mode }) => {
     apiUrl = apiUrl.replace(/\/api\.php$/, '');
     console.log(`🌐 Using EXTERNAL API from ENV: ${apiUrl}/api.php`);
   } else {
-    // Use the new external API endpoint at med.wayrus.co.ke (primary remote server)
-    apiUrl = 'https://med.wayrus.co.ke';
+    // Use the new external API endpoint at diagsolutionsltd.com (primary remote server)
+    apiUrl = 'https://diagsolutionsltd.com';
     // Remove trailing /api.php if present (we'll add it back in proxy config)
     apiUrl = apiUrl.replace(/\/api\.php$/, '');
     console.log(`🌐 Using DEFAULT REMOTE API: ${apiUrl}/api.php`);

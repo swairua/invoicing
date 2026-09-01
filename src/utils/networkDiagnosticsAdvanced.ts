@@ -131,7 +131,7 @@ export async function testProxyDetection(
         recommendations: [
           'ℹ️ Your request is being proxied',
           '💡 If this is a corporate environment, contact IT about proxy settings',
-          '💡 Verify proxy allows HTTPS connections to med.wayrus.co.ke',
+          '💡 Verify proxy allows HTTPS connections to diagsolutionsltd.com',
         ],
       };
     }
@@ -381,7 +381,7 @@ export async function runFullNetworkDiagnostics(
 export function generateNetworkDiagnosticReport(results: NetworkDiagnostic[]): string {
   let report = '\n╔════════════════════════════════════════════════════════════╗\n';
   report += '║           NETWORK DIAGNOSTIC REPORT                          ║\n';
-  report += '║         med.wayrus.co.ke Connectivity                      ║\n';
+  report += '║         diagsolutionsltd.com Connectivity                      ║\n';
   report += '╚════════════════════════════════════════════════════════════╝\n\n';
 
   const errors = results.filter((r) => r.status === 'error');
@@ -443,16 +443,16 @@ export function generateNetworkDiagnosticReport(results: NetworkDiagnostic[]): s
       report += `   1. Check your DNS settings\n`;
       report += `   2. Flush DNS cache: ipconfig /flushdns (Windows) or sudo dscacheutil -flushcache (Mac)\n`;
       report += `   3. Try using public DNS: 8.8.8.8 or 1.1.1.1\n`;
-      report += `   4. Verify domain med.wayrus.co.ke is correct\n\n`;
+      report += `   4. Verify domain diagsolutionsltd.com is correct\n\n`;
     }
 
     if (connectError) {
       report += `🔴 Connection Issue Detected\n`;
-      report += `   1. Check if firewall allows HTTPS (port 443) to med.wayrus.co.ke\n`;
+      report += `   1. Check if firewall allows HTTPS (port 443) to diagsolutionsltd.com\n`;
       report += `   2. If on corporate network, check with IT about proxy settings\n`;
       report += `   3. Verify internet connection is active\n`;
       report += `   4. Try connecting from different network (mobile hotspot) to isolate issue\n`;
-      report += `   5. Check server status: is med.wayrus.co.ke online?\n\n`;
+      report += `   5. Check server status: is diagsolutionsltd.com online?\n\n`;
     }
 
     if (corsError && !connectError) {
