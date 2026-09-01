@@ -1,11 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { generateCreditNotePDF, type CreditNotePDFData, type CompanyData } from '@/utils/creditNotePdfGenerator';
-import { useCompanies } from '@/hooks/useDatabase';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 
 export function useCreditNotePDFDownload() {
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
 
   return useMutation({
     mutationFn: async (creditNote: CreditNotePDFData) => {
@@ -18,6 +17,8 @@ export function useCreditNotePDFDownload() {
         tax_number: currentCompany?.tax_number || '',
         registration_number: currentCompany?.registration_number || '',
         logo_url: currentCompany?.logo_url || '',
+        primary_color: currentCompany?.primary_color || undefined,
+        currency: currentCompany?.currency || undefined,
       };
 
       // Generate and download PDF

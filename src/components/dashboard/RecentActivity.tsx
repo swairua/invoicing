@@ -2,11 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
-import { useAuditLogs, useCompanies } from '@/hooks/useDatabase';
+import { useAuditLogs } from '@/hooks/useDatabase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 
 interface AuditLog {
   id: string;
@@ -70,8 +71,7 @@ function formatEntityType(entityType: string): string {
 }
 
 export function RecentActivity() {
-  const { data: companies, isLoading: companiesLoading } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany, isLoading: companiesLoading } = useCurrentCompany();
   const { data: auditLogs, isLoading: auditLogsLoading, error: auditLogsError } = useAuditLogs(currentCompany?.id);
 
   const isLoading = auditLogsLoading || companiesLoading;

@@ -10,6 +10,7 @@ import { getDatabase, getDatabaseProvider } from '@/integrations/database';
 import type { IDatabase, DatabaseProvider } from '@/integrations/database';
 import { useForceTaxSettings } from '@/hooks/useForceTaxSettings';
 import { generateDocumentNumberAPI } from '@/utils/documentNumbering';
+import type { CompanyRecord } from '@/types/company';
 
 let errorToastShown = false;
 
@@ -134,12 +135,20 @@ export function useSelect<T>(table: string, filter?: Record<string, any>) {
       }
     }
 
-    // Try to fetch on initial load or when explicitly retried
+    const handleRefresh = (event: Event) => {
+      const detail = (event as CustomEvent<{ table?: string }>).detail;
+      if (!detail?.table || detail.table === table) {
+        setRetryCount(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('database:refresh', handleRefresh);
     fetchData();
 
     return () => {
       isMounted = false;
       if (timeoutHandle) clearTimeout(timeoutHandle);
+      window.removeEventListener('database:refresh', handleRefresh);
     };
   }, [db, table, filter, retryCount]);
 
@@ -281,7 +290,7 @@ export function useCompanies(companyId?: string) {
     companyId ? { id: companyId } : undefined,
     [companyId]
   );
-  return useSelect('companies', filter);
+  return useSelect<CompanyRecord>('companies', filter);
 }
 
 /**
@@ -1466,6 +1475,7 @@ export function useCreateCompany() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      window.dispatchEvent(new CustomEvent('database:refresh', { detail: { table: 'companies' } }));
       toast.success('Company created successfully!');
     },
     onError: (error: any) => {
@@ -1489,8 +1499,11 @@ export function useUpdateCompany() {
       if (result.error) throw result.error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
+      window.dispatchEvent(new CustomEvent('database:refresh', {
+        detail: { table: 'companies', id: variables.id, data: variables.data }
+      }));
       toast.success('Company updated successfully!');
     },
     onError: (error: any) => {

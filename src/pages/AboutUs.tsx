@@ -40,7 +40,7 @@ export default function AboutUs() {
       {/* Page Hero */}
       <section className="bg-gradient-to-r from-blue-600 to-green-600 text-white py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">About Medplus Africa</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">About {companyConfig.name}</h1>
           <p className="text-base sm:text-lg md:text-xl text-white/90">Learn about our journey, mission, and commitment to healthcare excellence</p>
         </div>
       </section>
@@ -53,7 +53,7 @@ export default function AboutUs() {
               <h2 className="text-4xl font-bold text-gray-900 mb-6">Our Story</h2>
               <div className="space-y-4 text-gray-700 text-lg leading-relaxed">
                 <p>
-                  With over 10 years of trusted service, Medplus Africa has been a leading distributor of critical care, hospital consumables, and furniture. What started as a small operation has grown into a leading healthcare solutions provider across Africa.
+                  With over 10 years of trusted service, {companyConfig.name} has been a leading distributor of critical care, hospital consumables, and furniture. What started as a small operation has grown into a leading healthcare solutions provider across Africa.
                 </p>
                 <p>
                   Our journey is built on the foundation of quality, reliability, and a deep commitment to improving healthcare delivery. We understand the challenges faced by hospitals and healthcare facilities, and we're dedicated to providing solutions that make a difference.

@@ -27,12 +27,13 @@ import {
   Truck,
   Package
 } from 'lucide-react';
-import { useCustomers, useProducts, useCompanies } from '@/hooks/useDatabase';
+import { useCustomers, useProducts } from '@/hooks/useDatabase';
 import { useInvoicesFixed as useInvoices } from '@/hooks/useInvoicesFixed';
 import { useCreateDeliveryNote } from '@/hooks/useQuotationItems';
 import { mapDeliveryNoteForDatabase } from '@/utils/deliveryNoteMapper';
 import { validateDeliveryNoteData } from '@/utils/deliveryNoteValidation';
 import { generateDocumentNumberAPI } from '@/utils/documentNumbering';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 
 interface DeliveryItem {
@@ -76,8 +77,7 @@ export const CreateDeliveryNoteModal = ({
   const [showProductSearch, setShowProductSearch] = useState(false);
   const [deliveryNoteNumber, setDeliveryNoteNumber] = useState('');
 
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const companyId = currentCompany?.id;
 
   const { data: customers } = useCustomers(companyId);

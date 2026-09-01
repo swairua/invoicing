@@ -1,12 +1,8 @@
 import { apiClient } from '@/integrations/api';
 
-export interface CompanyData {
-  id: string;
-  name: string;
-  logo_url?: string;
-  primary_color?: string;
-  [key: string]: any;
-}
+import type { CompanyRecord } from '@/types/company';
+
+export type CompanyData = CompanyRecord;
 
 /**
  * Validate if a logo URL is a valid data URI or regular URL
@@ -44,7 +40,7 @@ export async function fetchPublicCompanyData(): Promise<CompanyData | null> {
   try {
     // Pass isPublic: true to prevent auth failure toast on login page
     // This is a public endpoint that should gracefully handle 401 responses
-    const result = await apiClient.select('companies', {}, true);
+    const result = await apiClient.select('companies', { is_active: true }, true);
 
     if (!result.data || result.error) {
       console.info('ℹ️ No public company data available (this is normal before login):', result.error?.message);
@@ -64,11 +60,10 @@ export async function fetchPublicCompanyData(): Promise<CompanyData | null> {
     const logoUrl = isValidLogoUrl(company.logo_url) ? company.logo_url : undefined;
 
     return {
+      ...company,
       id: company.id,
       name: company.name,
       logo_url: logoUrl,
-      primary_color: company.primary_color,
-      ...company
     } as CompanyData;
   } catch (error) {
     console.info('Info: Company data fetch during public page load:', error);

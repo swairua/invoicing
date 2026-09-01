@@ -16,13 +16,20 @@ export interface SEOMetadata {
 
 // Default site config - used as fallback if company config is not available
 const DEFAULT_SITE_CONFIG = {
-  siteName: '&gt;&gt; Medical Supplies',
-  url: 'https://medplusafrica.com',
-  logo: 'https://medplusafrica.com/assets/medplus-logo.webp',
-  description: 'Trusted distributor of critical care supplies, hospital consumables, and furniture across Africa.',
-  email: 'info@medplusafrica.com',
-  phone: '+254 741 207 690',
-  address: 'P.O. Box 85988-00200, Nairobi, Eastern Bypass, Membley',
+  siteName: 'Your Company',
+  url: '',
+  logo: '/fallback-logo.svg',
+  description: '',
+  email: '',
+  phone: '',
+  address: '',
+  currency: '',
+  sameAs: [] as string[],
+};
+
+const normalizeWebsite = (website?: string | null) => {
+  if (!website) return '';
+  return /^https?:\/\//i.test(website) ? website : `https://${website}`;
 };
 
 /**
@@ -36,12 +43,14 @@ export function createSiteConfig(companyConfig: CompanyConfig | null) {
 
   return {
     siteName: companyConfig.name || DEFAULT_SITE_CONFIG.siteName,
-    url: `https://${companyConfig.name?.toLowerCase().replace(/\s+/g, '')}` || DEFAULT_SITE_CONFIG.url,
+    url: normalizeWebsite(companyConfig.website),
     logo: companyConfig.logo_url || DEFAULT_SITE_CONFIG.logo,
     description: companyConfig.description || DEFAULT_SITE_CONFIG.description,
     email: companyConfig.email || DEFAULT_SITE_CONFIG.email,
     phone: companyConfig.phone || DEFAULT_SITE_CONFIG.phone,
     address: companyConfig.address || DEFAULT_SITE_CONFIG.address,
+    currency: companyConfig.currency || DEFAULT_SITE_CONFIG.currency,
+    sameAs: [companyConfig.facebook_url, companyConfig.instagram_url, companyConfig.linkedin_url, companyConfig.twitter_url].filter(Boolean),
   };
 }
 
@@ -67,10 +76,7 @@ export const generateOrganizationSchema = (companyConfig?: CompanyConfig | null)
       streetAddress: config.address,
       addressCountry: 'KE',
     },
-    sameAs: [
-      'https://www.facebook.com/medplusafrica',
-      'https://www.instagram.com/medplusafrica',
-    ],
+    sameAs: config.sameAs,
   };
 };
 
@@ -201,7 +207,7 @@ export const generateCollectionSchema = (products: Array<{
     '@type': 'CollectionPage',
     name: 'Product Collection',
     description: 'Collection of medical products and equipment',
-    url: `${config.url}/products`,
+    url: config.url ? `${config.url}/products` : '/products',
     mainEntity: products.map((product) => ({
       '@type': 'Product',
       name: product.name,
@@ -215,7 +221,7 @@ export const generateCollectionSchema = (products: Array<{
       offers: {
         '@type': 'AggregateOffer',
         availability: 'https://schema.org/InStock',
-        priceCurrency: 'KES',
+        priceCurrency: config.currency || 'USD',
         ...(product.price && { highPrice: product.price.toString() }),
       },
     })),
@@ -232,7 +238,7 @@ export const generateContactPageSchema = (companyConfig?: CompanyConfig | null) 
     '@type': 'ContactPage',
     name: `Contact ${config.siteName}`,
     description: `Get in touch with ${config.siteName} for inquiries and support regarding medical supplies and hospital equipment.`,
-    url: `${config.url}/contact`,
+    url: config.url ? `${config.url}/contact` : '/contact',
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: config.phone,
@@ -266,7 +272,7 @@ export const updateMetaTags = (metadata: SEOMetadata, companyConfig?: CompanyCon
   const config = createSiteConfig(companyConfig || null);
 
   // Title
-  document.title = `${metadata.title} | ${config.siteName}`;
+  document.title = config.siteName ? `${metadata.title} | ${config.siteName}` : metadata.title;
 
   // Meta tags
   updateOrCreateMetaTag('name', 'description', metadata.description);
@@ -275,7 +281,7 @@ export const updateMetaTags = (metadata: SEOMetadata, companyConfig?: CompanyCon
   // Open Graph
   updateOrCreateMetaTag('property', 'og:title', `${metadata.title}`);
   updateOrCreateMetaTag('property', 'og:description', metadata.description);
-  updateOrCreateMetaTag('property', 'og:url', metadata.url || config.url);
+  updateOrCreateMetaTag('property', 'og:url', metadata.url || config.url || window.location.href);
   updateOrCreateMetaTag('property', 'og:image', metadata.image || config.logo);
   updateOrCreateMetaTag('property', 'og:type', metadata.type || 'website');
 
@@ -285,7 +291,7 @@ export const updateMetaTags = (metadata: SEOMetadata, companyConfig?: CompanyCon
   updateOrCreateMetaTag('name', 'twitter:image', metadata.image || config.logo);
 
   // Canonical
-  updateOrCreateCanonical(metadata.url || config.url);
+  updateOrCreateCanonical(metadata.url || config.url || window.location.href);
 };
 
 /**

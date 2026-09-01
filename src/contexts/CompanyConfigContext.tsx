@@ -2,23 +2,12 @@ import React, { createContext, useContext, ReactNode, useEffect, useState, useCa
 import { getDatabase } from '@/integrations/database';
 import { logError } from '@/utils/errorLogger';
 import { updateFavicon } from '@/utils/seoHelpers';
+import type { CompanyRecord } from '@/types/company';
 
 /**
  * Company configuration interface for public-facing branding and SEO
  */
-export interface CompanyConfig {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  country?: string;
-  description?: string;
-  logo_url?: string;
-  primary_color?: string;
-  currency?: string;
-}
+export type CompanyConfig = CompanyRecord;
 
 interface CompanyConfigContextType {
   config: CompanyConfig | null;
@@ -29,16 +18,8 @@ interface CompanyConfigContextType {
 
 const defaultConfig: CompanyConfig = {
   id: 'default',
-  name: '>> Medical Supplies',
-  email: 'info@medplusafrica.com',
-  phone: '+254 741 207 690',
-  address: 'P.O. Box 85988-00200, Nairobi, Eastern Bypass, Membley',
-  city: 'Nairobi',
-  country: 'Kenya',
-  currency: 'KES',
-  logo_url: 'https://medplusafrica.com/assets/medplus-logo.webp',
-  primary_color: '#FF8C42',
-  description: 'Trusted distributor of critical care supplies, hospital consumables, and furniture across Africa.',
+  name: 'Your Company',
+  logo_url: '/fallback-logo.svg',
 };
 
 const CompanyConfigContext = createContext<CompanyConfigContextType | undefined>(undefined);
@@ -60,8 +41,7 @@ export function CompanyConfigProvider({ children }: { children: ReactNode }) {
         throw new Error('Database not initialized');
       }
 
-      // Fetch first active company from database
-      const result = await database.select('companies', {}, { limit: 1, filter: 'is_active=eq.true' });
+      const result = await database.select<CompanyRecord>('companies', { is_active: true });
 
       if (result.error) {
         console.warn('⚠️  Error fetching company config from database:', result.error);
@@ -71,17 +51,10 @@ export function CompanyConfigProvider({ children }: { children: ReactNode }) {
       } else if (result.data && result.data.length > 0) {
         const companyData = result.data[0];
         const loadedConfig: CompanyConfig = {
+          ...companyData,
           id: companyData.id,
           name: companyData.name || defaultConfig.name,
-          email: companyData.email || defaultConfig.email,
-          phone: companyData.phone || defaultConfig.phone,
-          address: companyData.address || defaultConfig.address,
-          city: companyData.city || defaultConfig.city,
-          country: companyData.country || defaultConfig.country,
-          description: companyData.description || defaultConfig.description,
           logo_url: companyData.logo_url || defaultConfig.logo_url,
-          primary_color: companyData.primary_color || defaultConfig.primary_color,
-          currency: companyData.currency || defaultConfig.currency,
         };
         console.log('✅ Company config loaded from database:', loadedConfig.name);
         setConfig(loadedConfig);
@@ -109,9 +82,18 @@ export function CompanyConfigProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Load config once on mount
   useEffect(() => {
     loadCompanyConfig();
+
+    const handleRefresh = (event: Event) => {
+      const detail = (event as CustomEvent<{ table?: string }>).detail;
+      if (!detail?.table || detail.table === 'companies') {
+        loadCompanyConfig();
+      }
+    };
+
+    window.addEventListener('database:refresh', handleRefresh);
+    return () => window.removeEventListener('database:refresh', handleRefresh);
   }, [loadCompanyConfig]);
 
   return (
@@ -123,7 +105,7 @@ export function CompanyConfigProvider({ children }: { children: ReactNode }) {
 
 /**
  * Hook to use company configuration throughout the app
- * Returns company config with fallback to defaults
+ * Returns the active public company config, or neutral defaults while unavailable.
  */
 export function useCompanyConfig(): CompanyConfig {
   const context = useContext(CompanyConfigContext);

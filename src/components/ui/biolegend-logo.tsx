@@ -11,6 +11,7 @@ interface BiolegendLogoProps {
 
 import { useContext } from 'react';
 import { CompanyContext } from '@/contexts/CompanyContext';
+import { useCompanyConfig } from '@/contexts/CompanyConfigContext';
 
 export function BiolegendLogo({
   className,
@@ -22,6 +23,7 @@ export function BiolegendLogo({
   // Safely try to get company context (won't throw if provider is missing)
   const context = useContext(CompanyContext);
   const currentCompany = context?.currentCompany;
+  const publicCompany = useCompanyConfig();
 
   const sizeClasses = {
     sm: "h-10 w-10",
@@ -35,11 +37,9 @@ export function BiolegendLogo({
     lg: "text-2xl"
   };
 
-  // Use passed-in data first, then fall back to context, then use defaults
-  const fallbackLogoUrl = '/fallback-logo.png';
-  const fallbackLogoSvgUrl = '/fallback-logo.svg';
-  const logoSrc = propLogoUrl || currentCompany?.logo_url || fallbackLogoUrl;
-  const companyName = propCompanyName || currentCompany?.name || '';
+  const fallbackLogoUrl = '/fallback-logo.svg';
+  const logoSrc = propLogoUrl || currentCompany?.logo_url || publicCompany.logo_url || fallbackLogoUrl;
+  const companyName = propCompanyName || currentCompany?.name || publicCompany.name || 'Your Company';
 
   return (
     <div className={cn("flex items-center space-x-3", className)}>
@@ -51,13 +51,8 @@ export function BiolegendLogo({
           className="w-full h-full object-contain"
           onError={(e) => {
             const img = e.target as HTMLImageElement;
-            // If the current src is the PNG fallback, try SVG
-            if (img.src.includes('/fallback-logo.png')) {
-              console.warn(`PNG fallback failed, trying SVG: ${logoSrc}`);
-              img.src = fallbackLogoSvgUrl;
-            } else {
-              // If both PNG and SVG failed, just warn
-              console.warn(`Logo failed to load: ${logoSrc}`);
+            if (img.src !== `${window.location.origin}${fallbackLogoUrl}`) {
+              img.src = fallbackLogoUrl;
             }
           }}
         />
@@ -67,10 +62,7 @@ export function BiolegendLogo({
       {showText && companyName && (
         <div className="flex flex-col">
           <span className={cn("font-bold text-primary", textSizeClasses[size])}>
-            {companyName.split(' ')[0].toUpperCase()}
-          </span>
-          <span className={cn("text-xs text-secondary font-medium -mt-1", size === "sm" && "text-[10px]")}>
-            {companyName.split(' ')[1]?.toUpperCase() || ''}
+            {companyName.toUpperCase()}
           </span>
         </div>
       )}

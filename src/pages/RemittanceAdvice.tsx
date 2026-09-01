@@ -360,19 +360,16 @@ const RemittanceAdvice = () => {
               <div className="text-center mb-6">
                 <h2 className="text-xl font-bold text-primary">REMITTANCE ADVICE</h2>
                 <div className="mt-4 space-y-1">
-                  <div className="font-semibold">&gt;&gt; Medical Supplies Limited</div>
-                  <div className="text-sm text-muted-foreground">
-                    P.O Box 85988-00200, Nairobi, Kenya
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Tel: 0741 207 690/0780 165 490
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Email: biolegend@biolegendscientific.co.ke/info@biolegendscientific.co.ke
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Website: www.biolegendscientific.co.ke
-                  </div>
+                  <div className="font-semibold">{currentCompany?.name || 'Your Company'}</div>
+                  {currentCompany?.address && <div className="text-sm text-muted-foreground">{currentCompany.address}</div>}
+                  {(currentCompany?.city || currentCompany?.state || currentCompany?.postal_code || currentCompany?.country) && (
+                    <div className="text-sm text-muted-foreground">
+                      {[currentCompany.city, currentCompany.state, currentCompany.postal_code, currentCompany.country].filter(Boolean).join(', ')}
+                    </div>
+                  )}
+                  {currentCompany?.phone && <div className="text-sm text-muted-foreground">Tel: {currentCompany.phone}</div>}
+                  {currentCompany?.email && <div className="text-sm text-muted-foreground">Email: {currentCompany.email}</div>}
+                  {currentCompany?.website && <div className="text-sm text-muted-foreground">Website: {currentCompany.website}</div>}
                 </div>
               </div>
 

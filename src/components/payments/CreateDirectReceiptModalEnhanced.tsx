@@ -30,13 +30,14 @@ import {
   Receipt,
   Loader2
 } from 'lucide-react';
-import { useCustomers, useGenerateDocumentNumber, useTaxSettings, useCompanies } from '@/hooks/useDatabase';
+import { useCustomers, useGenerateDocumentNumber, useTaxSettings } from '@/hooks/useDatabase';
 import { useOptimizedProductSearch, usePopularProducts } from '@/hooks/useOptimizedProducts';
 import { useCreateDirectReceiptWithItems } from '@/hooks/useQuotationItems';
 import { useCreateCreditBalance, useCustomerCreditBalances } from '@/hooks/useCustomerCreditBalances';
 import { useHandleExcessPayment } from '@/hooks/useHandleExcessPayment';
 import { generateDocumentNumberAPI } from '@/utils/documentNumbering';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { ExcessPaymentHandler, type ExcessPaymentData } from '@/components/payments/ExcessPaymentHandler';
 import { CustomerCreditBalanceViewer } from '@/components/payments/CustomerCreditBalanceViewer';
 import { toast } from 'sonner';
@@ -83,8 +84,7 @@ export function CreateDirectReceiptModalEnhanced({
 
   // Get current user and company from context
   const { profile, loading: authLoading } = useAuth();
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const { data: customers, isLoading: loadingCustomers } = useCustomers(currentCompany?.id);
   const {
     data: searchedProducts,

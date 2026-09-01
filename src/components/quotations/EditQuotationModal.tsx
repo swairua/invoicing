@@ -25,8 +25,9 @@ import {
   Calculator,
   FileText
 } from 'lucide-react';
-import { useCustomers, useProducts, useTaxSettings, useCompanies } from '@/hooks/useDatabase';
+import { useCustomers, useProducts, useTaxSettings } from '@/hooks/useDatabase';
 import { useUpdateQuotationWithItems } from '@/hooks/useQuotationItems';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 
 interface QuotationItem {
@@ -63,8 +64,7 @@ export function EditQuotationModal({ open, onOpenChange, onSuccess, quotation }:
   const [showQuickAddCustomer, setShowQuickAddCustomer] = useState(false);
   const [showQuickAddProduct, setShowQuickAddProduct] = useState(false);
 
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const { data: customers, isLoading: loadingCustomers } = useCustomers(currentCompany?.id);
   const { data: products, isLoading: loadingProducts } = useProducts(currentCompany?.id);
   const { data: taxSettings } = useTaxSettings(currentCompany?.id);

@@ -32,7 +32,8 @@ import {
   Calendar,
   AlertTriangle
 } from 'lucide-react';
-import { useCreateLPO, useGenerateLPONumber, useAllSuppliersAndCustomers, useProducts, useCompanies, useCreateSupplier } from '@/hooks/useDatabase';
+import { useCreateLPO, useGenerateLPONumber, useAllSuppliersAndCustomers, useProducts, useCreateSupplier } from '@/hooks/useDatabase';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 import { validateLPO } from '@/utils/lpoValidation';
 import { validateSupplierSelection, ValidationResult } from '@/utils/customerSupplierValidation';
@@ -94,8 +95,7 @@ export const CreateLPOModal = ({
   const [isCreatingSupplier, setIsCreatingSupplier] = useState(false);
   const [newlyCreatedSupplierId, setNewlyCreatedSupplierId] = useState<string | null>(null);
 
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const { existing: suppliers, refetch: refetchSuppliers } = useAllSuppliersAndCustomers(currentCompany?.id);
   const { data: products } = useProducts(currentCompany?.id);
   const createLPO = useCreateLPO();

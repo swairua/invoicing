@@ -181,7 +181,17 @@ export default function Customers() {
       const payments = allPayments.filter((pay: any) => invoiceIds.includes(pay.invoice_id));
       const creditNotes = creditNotesResult.data || [];
 
-      generateCustomerStatementPDF(customer, invoices, payments, creditNotes);
+      generateCustomerStatementPDF(customer, invoices, payments, creditNotes, undefined, currentCompany ? {
+        name: currentCompany.name,
+        address: currentCompany.address,
+        city: currentCompany.city,
+        country: currentCompany.country,
+        phone: currentCompany.phone,
+        email: currentCompany.email,
+        logo_url: currentCompany.logo_url,
+        primary_color: currentCompany.primary_color,
+        currency: currentCompany.currency,
+      } : undefined);
       toast.success(`Statement generated for ${customer.name}`);
     } catch (error) {
       console.error('Error generating statement:', error);

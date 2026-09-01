@@ -3,10 +3,11 @@ import { useCompanies } from '@/hooks/useDatabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { logUnauthorizedCompanyAccess } from '@/utils/companyAccessLogger';
+import type { CompanyRecord } from '@/types/company';
 
 interface CompanyContextType {
-  companies: any[];
-  currentCompany: any | null;
+  companies: CompanyRecord[];
+  currentCompany: CompanyRecord | null;
   selectedCompanyId: string | null;
   setSelectedCompanyId: (id: string | null) => void;
   switchCompany: (id: string) => void;
