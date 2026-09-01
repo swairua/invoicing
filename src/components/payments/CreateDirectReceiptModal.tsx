@@ -24,9 +24,10 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import { useCustomers, useCompanies } from '@/hooks/useDatabase';
+import { useCustomers } from '@/hooks/useDatabase';
 import { useCreateDirectReceipt } from '@/hooks/useQuotationItems';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { generateDocumentNumberAPI } from '@/utils/documentNumbering';
 import { toast } from 'sonner';
 
@@ -54,8 +55,7 @@ export function CreateDirectReceiptModal({
 
   // Get current user and company from context
   const { profile, loading: authLoading } = useAuth();
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const { data: customers, isLoading: loadingCustomers } = useCustomers(currentCompany?.id);
   const createDirectReceipt = useCreateDirectReceipt();
 

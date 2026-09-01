@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRestockProduct } from '@/hooks/useQuotationItems';
-import { useCompanies } from '@/hooks/useDatabase';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 
 interface RestockItemModalProps {
   open: boolean;
@@ -43,8 +43,7 @@ export function RestockItemModal({ open, onOpenChange, onSuccess, item }: Restoc
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get company and restock mutation
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const restockProduct = useRestockProduct();
 
   const handleInputChange = (field: string, value: any) => {

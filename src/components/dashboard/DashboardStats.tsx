@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, FileText, Package, Users, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useDashboardStats, useCompanies } from '@/hooks/useDatabase';
+import { useDashboardStats } from '@/hooks/useDatabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 
 interface StatCardProps {
   title: string;
@@ -59,8 +60,7 @@ function StatCard({ title, value, change, changeType, icon: Icon, alert }: StatC
 }
 
 export function DashboardStats() {
-  const { data: companies, error: companiesError } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const { data: stats, isLoading, error } = useDashboardStats(currentCompany?.id);
 
   // Show error message if there's an error fetching data

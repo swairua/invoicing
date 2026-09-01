@@ -24,9 +24,10 @@ import {
   Search,
   Calculator
 } from 'lucide-react';
-import { useCustomers, useProducts, useGenerateDocumentNumber, useTaxSettings, useCompanies } from '@/hooks/useDatabase';
+import { useCustomers, useProducts, useGenerateDocumentNumber, useTaxSettings } from '@/hooks/useDatabase';
 import { useCreateQuotationWithItems } from '@/hooks/useQuotationItems';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 
 interface QuotationItem {
@@ -64,8 +65,7 @@ export function CreateQuotationModal({ open, onOpenChange, onSuccess }: CreateQu
 
   // Get current user and company from context
   const { profile, loading: authLoading } = useAuth();
-  const { data: companies } = useCompanies();
-  const currentCompany = companies?.[0];
+  const { currentCompany } = useCurrentCompany();
   const { data: customers, isLoading: loadingCustomers } = useCustomers(currentCompany?.id);
   const { data: products, isLoading: loadingProducts } = useProducts(currentCompany?.id);
   const { data: taxSettings } = useTaxSettings(currentCompany?.id);
@@ -243,7 +243,7 @@ export function CreateQuotationModal({ open, onOpenChange, onSuccess }: CreateQu
       // Generate quotation number
       console.log('Generating quotation number...');
       const quotationNumber = await generateDocNumber.mutateAsync({
-        companyId: currentCompany?.id || 'default-company-id',
+        companyId: currentCompany?.id || '',
         type: 'quotation'
       });
       console.log('Generated quotation number:', quotationNumber);

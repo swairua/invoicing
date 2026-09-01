@@ -30,10 +30,11 @@ import {
   FileText,
   AlertCircle
 } from 'lucide-react';
-import { useCustomers, useProducts, useTaxSettings, useCompanies } from '@/hooks/useDatabase';
+import { useCustomers, useProducts, useTaxSettings } from '@/hooks/useDatabase';
 import { useInvoicesFixed as useInvoices } from '@/hooks/useInvoicesFixed';
 import { useGenerateCreditNoteNumber } from '@/hooks/useCreditNotes';
 import { useCreateCreditNoteWithItems } from '@/hooks/useCreditNoteItems';
+import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { toast } from 'sonner';
 
 interface CreditNoteItem {
@@ -96,8 +97,8 @@ export function CreateCreditNoteModal({
   const [searchProduct, setSearchProduct] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: companies, isLoading: loadingCompanies, error: companiesError } = useCompanies();
-  const companyId = companies?.[0]?.id;
+  const { currentCompany } = useCurrentCompany();
+  const companyId = currentCompany?.id;
   
   const { data: customers, isLoading: loadingCustomers } = useCustomers(companyId);
   const { data: products, isLoading: loadingProducts } = useProducts(companyId);
