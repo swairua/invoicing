@@ -2,7 +2,7 @@
 
 ## Summary
 
-The application was experiencing "Failed to fetch" errors when trying to connect to the remote API at `https://helixgeneralhardware.com/api.php`. This is a common CORS (Cross-Origin Resource Sharing) issue.
+The application was experiencing "Failed to fetch" errors when trying to connect to the remote API at `https://diagsolutionsltd.com/api.php`. This is a common CORS (Cross-Origin Resource Sharing) issue.
 
 **All fixes have been applied. The app should now work better with improved error handling and diagnostics.**
 
@@ -87,7 +87,7 @@ The application was experiencing "Failed to fetch" errors when trying to connect
 
 ## Backend Team: Next Steps
 
-The backend at `https://med.wayrus.co.ke/api.php` needs to add CORS headers:
+The backend at `https://diagsolutionsltd.com/api.php` needs to add CORS headers:
 
 ```php
 // Add to api.php
@@ -140,7 +140,7 @@ If you need to use a different API endpoint:
 VITE_EXTERNAL_API_URL=https://your-custom-api.com/api.php
 ```
 
-The app will use this instead of the default `https://med.wayrus.co.ke/api.php`.
+The app will use this instead of the default `https://diagsolutionsltd.com/api.php`.
 
 ---
 

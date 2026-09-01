@@ -67,7 +67,7 @@ DB_USER=layonsc1_med
 DB_PASS=Sirgeorge.12
 DB_NAME=layonsc1_med
 UPLOADS_DIR=/home/layonsc1/med.wayrus.co.ke/uploads
-VITE_EXTERNAL_API_URL=https://med.wayrus.co.ke/api.php
+VITE_EXTERNAL_API_URL=https://diagsolutionsltd.com/api.php
 ```
 
 ### 3. Documentation Created
@@ -89,25 +89,25 @@ The development environment is configured to use the remote API at production. T
 
 ### Option 1: Use Production Endpoints (Recommended for now)
 
-The frontend already points to: `https://med.wayrus.co.ke/api.php`
+The frontend already points to: `https://diagsolutionsltd.com/api.php`
 
 Test these endpoints:
 
 ```bash
 # 1. Check configuration
-curl https://med.wayrus.co.ke/api.php?action=config_debug
+curl https://diagsolutionsltd.com/api.php?action=config_debug
 
 # 2. Test login
-curl -X POST https://med.wayrus.co.ke/api.php?action=login \
+curl -X POST https://diagsolutionsltd.com/api.php?action=login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password"}'
 
 # 3. Refresh a token
-curl -X POST https://med.wayrus.co.ke/api.php?action=refresh_token \
+curl -X POST https://diagsolutionsltd.com/api.php?action=refresh_token \
   -H "Authorization: Bearer <your-token>"
 
 # 4. Debug a token
-curl https://med.wayrus.co.ke/api.php?action=token_debug \
+curl https://diagsolutionsltd.com/api.php?action=token_debug \
   -H "Authorization: Bearer <your-token>"
 ```
 
@@ -122,7 +122,7 @@ If you want to test the local API during development:
 
 ## Production Deployment Checklist
 
-Before deploying to production at `med.wayrus.co.ke`:
+Before deploying to production at `diagsolutionsltd.com`:
 
 ### Files to Deploy
 - ✅ `backend/api.php` - Updated with all new features
@@ -145,15 +145,15 @@ $cors_allowed = true; // Change to: in_array($origin, $allowed_origins);
 Then configure allowed origins for your domain:
 ```php
 $allowed_origins = [
-    'https://med.wayrus.co.ke',
+    'https://diagsolutionsltd.com',
     'http://localhost:3000',  // Keep for development
 ];
 ```
 
 **2. Add Monitoring**
 Create a monitoring endpoint that periodically calls:
-- `https://med.wayrus.co.ke/api.php?action=config_debug`
-- `https://med.wayrus.co.ke/api.php?action=health`
+- `https://diagsolutionsltd.com/api.php?action=config_debug`
+- `https://diagsolutionsltd.com/api.php?action=health`
 
 **3. Security Review**
 - Ensure JWT_SECRET is at least 32 characters (current: OK)
@@ -218,7 +218,7 @@ Create a monitoring endpoint that periodically calls:
 
 ### Check Configuration
 ```
-GET https://med.wayrus.co.ke/api.php?action=config_debug
+GET https://diagsolutionsltd.com/api.php?action=config_debug
 ```
 
 Response will show:
@@ -228,7 +228,7 @@ Response will show:
 
 ### Check Token Issues
 ```
-GET https://med.wayrus.co.ke/api.php?action=token_debug
+GET https://diagsolutionsltd.com/api.php?action=token_debug
 Headers: Authorization: Bearer <your-token>
 ```
 
@@ -268,7 +268,7 @@ Look for lines with:
 
 ## Next Steps
 
-1. **Verify Production**: The API is live at https://med.wayrus.co.ke/api.php
+1. **Verify Production**: The API is live at https://diagsolutionsltd.com/api.php
    - It's already using the updated code with JWT and CORS support
    - Test with the endpoints listed in "How to Test Locally"
 

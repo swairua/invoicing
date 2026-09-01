@@ -59,7 +59,7 @@ The application includes a `Dockerfile` configured for cloud hosting:
 
 **Example Render Environment Variables**:
 ```
-VITE_EXTERNAL_API_URL=https://med.wayrus.co.ke/api.php
+VITE_EXTERNAL_API_URL=https://diagsolutionsltd.com/api.php
 ```
 
 ### 2. Local Apache Hosting
@@ -172,7 +172,7 @@ The application logs environment detection information to the browser console:
 **Cloud Hosting Detection**:
 ```
 📍 Environment Configuration: {
-  apiBaseUrl: "https://med.wayrus.co.ke/api.php",
+  apiBaseUrl: "https://diagsolutionsltd.com/api.php",
   isLocal: false,
   hostingType: "cloud",
   hostname: "my-app.render.com",

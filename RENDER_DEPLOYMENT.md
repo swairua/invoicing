@@ -1,12 +1,12 @@
 # Deploying to Render.com
 
-This document explains how to deploy the medical management frontend to Render.com while keeping the API on helixgeneralhardware.com.
+This document explains how to deploy the medical management frontend to Render.com while keeping the API on diagsolutionsltd.com.
 
 ## Prerequisites
 
 1. **Render.com Account**: Create a free account at https://render.com
 2. **GitHub Repository**: Push your code to GitHub
-3. **API Already Running**: med.wayrus.co.ke/api.php must be deployed and working
+3. **API Already Running**: diagsolutionsltd.com/api.php must be deployed and working
 
 ## Setup Steps
 
@@ -47,7 +47,7 @@ Fill in these settings:
 1. In the service settings, scroll to **"Environment"**
 2. Add this environment variable:
    - **Key**: `VITE_EXTERNAL_API_URL`
-   - **Value**: `https://med.wayrus.co.ke/api.php`
+   - **Value**: `https://diagsolutionsltd.com/api.php`
 
 3. (Optional) Add Node.js version:
    - **Key**: `NODE_VERSION`
@@ -64,8 +64,8 @@ Fill in these settings:
 ## How It Works
 
 - **Frontend**: Deployed on Render.com (renders the React app in the browser)
-- **API**: Stays on med.wayrus.co.ke (handles all data operations)
-- **Communication**: Frontend makes API calls to med.wayrus.co.ke/api.php
+- **API**: Stays on diagsolutionsltd.com (handles all data operations)
+- **Communication**: Frontend makes API calls to diagsolutionsltd.com/api.php
 
 The `server.js` file serves the built React app and handles client-side routing (so `/login`, `/dashboard`, etc. all work correctly).
 
@@ -79,7 +79,7 @@ This is expected during build - the variable is set at runtime by Render.com. If
 
 ### Frontend can't reach the API
 
-1. Check that `https://med.wayrus.co.ke/api.php?action=health` is accessible
+1. Check that `https://diagsolutionsltd.com/api.php?action=health` is accessible
 2. Verify CORS headers are being sent from the API
 3. Check browser console for error messages
 
@@ -95,7 +95,7 @@ The following environment variables can be configured:
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `VITE_EXTERNAL_API_URL` | Backend API endpoint | `https://helixgeneralhardware.com/api.php` |
+| `VITE_EXTERNAL_API_URL` | Backend API endpoint | `https://diagsolutionsltd.com/api.php` |
 | `NODE_VERSION` | Node.js version to use | `20` |
 | `PORT` | Port to listen on | `3000` (Render assigns automatically) |
 
@@ -127,7 +127,7 @@ Then visit `http://localhost:3000` in your browser.
 Your setup now has:
 
 ✅ **Development**: Local machine with `npm run dev`
-✅ **Staging**: med.wayrus.co.ke (current)
+✅ **Staging**: diagsolutionsltd.com (current)
 ✅ **Production**: Render.com (new)
 
 All can coexist and use the same API endpoint.

@@ -15,7 +15,7 @@ export default function NetworkDiagnosticsPage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Network Diagnostics</h1>
             <p className="mt-2 text-gray-600">
-              Troubleshoot connectivity issues with med.wayrus.co.ke API
+              Troubleshoot connectivity issues with diagsolutionsltd.com API
             </p>
           </div>
           <Button
@@ -53,7 +53,7 @@ export default function NetworkDiagnosticsPage() {
               <li>
                 Try accessing the API directly from your browser:{' '}
                 <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                  https://med.wayrus.co.ke/api.php?action=health
+                  https://diagsolutionsltd.com/api.php?action=health
                 </code>
               </li>
             </ul>

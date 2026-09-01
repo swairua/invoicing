@@ -9,7 +9,7 @@ services:
       - key: NODE_VERSION
         value: "20"
       - key: VITE_EXTERNAL_API_URL
-        value: https://med.wayrus.co.ke/api.php
+        value: https://diagsolutionsltd.com/api.php
     autoDeploy: false
     routes:
       - path: /

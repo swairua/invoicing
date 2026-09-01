@@ -33,7 +33,7 @@ export function getClientApiUrl(): string {
   // This function is just for explicit usage when needed
   const fullUrl = typeof window !== 'undefined'
     ? `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/api.php`
-    : 'https://med.wayrus.co.ke/api.php'; // Fallback for SSR
+    : 'https://diagsolutionsltd.com/api.php'; // Fallback for SSR
   
   return fullUrl;
 }

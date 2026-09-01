@@ -283,7 +283,7 @@ export function useSafeRPC(rpcCall: () => Promise<any>, fallback: any = null) {
 export function logRPCStatus() {
   console.group('🔍 RPC Function Status');
   console.warn(
-    '⚠️ Using external MySQL API at med.wayrus.co.ke'
+    '⚠️ Using external MySQL API at diagsolutionsltd.com'
   );
   console.warn('❌ Supabase RPC functions NOT available');
   console.warn('✅ Use API endpoints and directFileUpload.ts utilities instead');

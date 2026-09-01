@@ -8,7 +8,7 @@ import { getSharedExternalAdapter } from './shared-adapter';
 
 /**
  * External API Authentication Implementation
- * Uses the med.wayrus.co.ke/api.php backend for all auth operations
+ * Uses the diagsolutionsltd.com/api.php backend for all auth operations
  */
 class SupabaseAuthAdapter implements IAuth {
   async signIn(

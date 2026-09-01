@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This audit verifies that the application has been completely migrated from Supabase to an external API (med.wayrus.co.ke/api.php) and that **no direct Supabase SDK dependencies remain in runtime code**. The migration is largely successful, with the compatibility layer properly routing all calls through the external API adapter.
+This audit verifies that the application has been completely migrated from Supabase to an external API (diagsolutionsltd.com/api.php) and that **no direct Supabase SDK dependencies remain in runtime code**. The migration is largely successful, with the compatibility layer properly routing all calls through the external API adapter.
 
 ### Key Findings
 - ✅ **NO direct @supabase/supabase-js imports** in the entire codebase
@@ -61,7 +61,7 @@ getSharedExternalAdapter() [singleton]
     ↓
 ExternalAPIAdapter (login/logout/checkAuth)
     ↓
-fetch() → med.wayrus.co.ke/api.php?action=login
+fetch() → diagsolutionsltd.com/api.php?action=login
 ```
 
 ### Authentication Methods Implemented
@@ -106,7 +106,7 @@ getSharedExternalAdapter() [External API Adapter]
     ↓
 fetch(apiUrl?action=read&table=...) [POST request with filters]
     ↓
-med.wayrus.co.ke/api.php [Backend executes SELECT * FROM table]
+diagsolutionsltd.com/api.php [Backend executes SELECT * FROM table]
 ```
 
 ### CRUD Operations Supported
@@ -172,7 +172,7 @@ The app implements hybrid environment detection:
    - **Local hosting:** If hostname is `localhost`, private IP (`10.x.x.x`, `192.168.x.x`, `172.16-31.x.x`), or `.local` domain
      - Returns: `protocol://hostname:port/api.php`
    - **Cloud hosting:** If hostname is public
-     - Returns: Explicit URL or fallback to `https://med.wayrus.co.ke/api.php`
+     - Returns: Explicit URL or fallback to `https://diagsolutionsltd.com/api.php`
 
 ### Supported Configurations
 
@@ -274,7 +274,7 @@ const response = await fetch(`${API_BASE_URL}?action=upload_file`, {
 ### File Upload URL Calculation
 ```typescript
 const UPLOAD_BASE_URL = API_BASE_URL.replace(/\/api\.php$/, '') + '/uploads';
-// Result: https://med.wayrus.co.ke/uploads
+// Result: https://diagsolutionsltd.com/uploads
 ```
 
 ### File Size Limits
@@ -362,7 +362,7 @@ initializeDatabase({ provider });
 
 | Provider | Adapter | API Endpoint | Used By |
 |----------|---------|---|---|
-| `'external-api'` | ExternalAPIAdapter | `med.wayrus.co.ke/api.php` | Main app (current) |
+| `'external-api'` | ExternalAPIAdapter | `diagsolutionsltd.com/api.php` | Main app (current) |
 | `'supabase'` | SupabaseAdapter | Points to external API shimmed as "supabase" | Not actively used |
 | `'mysql'` | MySQLAdapter | `/api/db/*` endpoints (server-side) | Tests only |
 

@@ -108,7 +108,7 @@ export async function createTestUser(email: string, password: string) {
     console.log(`🔄 Creating test user: ${email}`);
 
     // Check API configuration
-    const apiUrl = import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php';
+    const apiUrl = import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
 
     if (!apiUrl) {
       return {

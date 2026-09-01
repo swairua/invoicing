@@ -97,7 +97,7 @@ export function LoginTest() {
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
               <strong>✅ External API Connected</strong><br />
-              URL: {import.meta.env.VITE_EXTERNAL_API_URL || 'https://med.wayrus.co.ke/api.php'}<br />
+              URL: {import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php'}<br />
               Provider: External API
             </AlertDescription>
           </Alert>

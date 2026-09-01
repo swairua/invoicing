@@ -2,7 +2,7 @@
 
 ## Overview
 
-The application now includes a comprehensive **Network Diagnostics Tool** to help identify and resolve connectivity issues with the `med.wayrus.co.ke` API server.
+The application now includes a comprehensive **Network Diagnostics Tool** to help identify and resolve connectivity issues with the `diagsolutionsltd.com` API server.
 
 ## Quick Access
 
@@ -14,7 +14,7 @@ The application now includes a comprehensive **Network Diagnostics Tool** to hel
 The Network Diagnostics panel runs the following tests:
 
 ### 1. **DNS Resolution**
-- Tests if the domain `med.wayrus.co.ke` can be resolved to an IP address
+- Tests if the domain `diagsolutionsltd.com` can be resolved to an IP address
 - Uses public DNS API (dns.google)
 - **Common Issue**: If this fails, your DNS server may be misconfigured or blocked
 
@@ -58,7 +58,7 @@ The diagnostics display a summary count:
 
 ### 🔴 **DNS Resolution Failed**
 
-**Error Message**: "Failed to resolve med.wayrus.co.ke"
+**Error Message**: "Failed to resolve diagsolutionsltd.com"
 
 **Causes**:
 - Incorrect domain name
@@ -74,7 +74,7 @@ ipconfig /flushdns
 sudo dscacheutil -flushcache
 
 # Test DNS manually
-nslookup med.wayrus.co.ke
+nslookup diagsolutionsltd.com
 
 # Use public DNS
 # Change system DNS to 8.8.8.8 (Google) or 1.1.1.1 (Cloudflare)
@@ -90,7 +90,7 @@ nslookup med.wayrus.co.ke
 - Firewall blocking the connection
 
 **Solutions**:
-1. Check if `med.wayrus.co.ke` is online
+1. Check if `diagsolutionsltd.com` is online
 2. Try accessing from a different network (mobile hotspot)
 3. Contact your network administrator about bandwidth restrictions
 4. Check server status with your hosting provider
@@ -106,9 +106,9 @@ nslookup med.wayrus.co.ke
 
 **Solutions**:
 1. Verify API server is running
-2. Check firewall rules allow HTTPS (port 443) to med.wayrus.co.ke
-3. Verify domain is correct: `med.wayrus.co.ke`
-4. Test with: `curl -I https://med.wayrus.co.ke`
+2. Check firewall rules allow HTTPS (port 443) to diagsolutionsltd.com
+3. Verify domain is correct: `diagsolutionsltd.com`
+4. Test with: `curl -I https://diagsolutionsltd.com`
 
 ### 🔴 **Network Error (Failed to fetch)**
 
@@ -149,7 +149,7 @@ Backend must be configured with CORS headers (see above)
 - This is normal in corporate environments
 
 **Solutions**:
-1. Verify proxy allows HTTPS to `med.wayrus.co.ke`
+1. Verify proxy allows HTTPS to `diagsolutionsltd.com`
 2. Check if proxy needs authentication
 3. Test without proxy if possible (mobile hotspot)
 
@@ -160,7 +160,7 @@ Backend must be configured with CORS headers (see above)
 If you're behind a corporate firewall/proxy:
 
 1. **Contact IT Department** and ask them to allow:
-   - Domain: `med.wayrus.co.ke`
+   - Domain: `diagsolutionsltd.com`
    - Port: `443` (HTTPS)
    - Protocol: TLS/SSL
 
@@ -179,7 +179,7 @@ If you're behind a corporate firewall/proxy:
 1. **Check Router Firewall**:
    - Admin panel: Usually `192.168.1.1` or `192.168.0.1`
    - Look for URL filtering or outbound rules
-   - Whitelist `med.wayrus.co.ke`
+   - Whitelist `diagsolutionsltd.com`
 
 2. **Check Windows Firewall**:
    ```bash
@@ -196,13 +196,13 @@ To test if the API is truly accessible:
 
 ```bash
 # Test basic connectivity
-curl -I https://med.wayrus.co.ke
+curl -I https://diagsolutionsltd.com
 
 # Test health endpoint
-curl https://med.wayrus.co.ke/api.php?action=health
+curl https://diagsolutionsltd.com/api.php?action=health
 
 # Test with verbose output
-curl -v https://med.wayrus.co.ke/api.php?action=health
+curl -v https://diagsolutionsltd.com/api.php?action=health
 ```
 
 ## Development vs Production
@@ -274,7 +274,7 @@ You'll see messages like:
 The app uses this environment variable:
 
 ```bash
-VITE_EXTERNAL_API_URL=https://med.wayrus.co.ke/api.php
+VITE_EXTERNAL_API_URL=https://diagsolutionsltd.com/api.php
 ```
 
 To override (development only):
@@ -326,21 +326,21 @@ If diagnostics don't solve the issue:
 
 ```bash
 # 1. Test DNS
-nslookup med.wayrus.co.ke
+nslookup diagsolutionsltd.com
 
 # 2. Test TCP connection
-curl -v https://med.wayrus.co.ke
+curl -v https://diagsolutionsltd.com
 
 # 3. Test API health
-curl https://med.wayrus.co.ke/api.php?action=health
+curl https://diagsolutionsltd.com/api.php?action=health
 
 # 4. Test with headers
 curl -H "Content-Type: application/json" \
-  https://med.wayrus.co.ke/api.php?action=health
+  https://diagsolutionsltd.com/api.php?action=health
 
 # 5. Test with credentials
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  https://med.wayrus.co.ke/api.php?action=health
+  https://diagsolutionsltd.com/api.php?action=health
 ```
 
 ### Packet Analysis (Advanced)
@@ -349,7 +349,7 @@ For network administrators:
 
 ```bash
 # Capture HTTPS traffic to the domain
-tcpdump -i any -n "host med.wayrus.co.ke"
+tcpdump -i any -n "host diagsolutionsltd.com"
 
 # Or use Wireshark GUI for visual analysis
 ```
@@ -378,5 +378,5 @@ The diagnostics tool measures:
 ---
 
 **Last Updated**: January 2026  
-**API Domain**: med.wayrus.co.ke  
+**API Domain**: diagsolutionsltd.com
 **Dev Server**: http://localhost:8080

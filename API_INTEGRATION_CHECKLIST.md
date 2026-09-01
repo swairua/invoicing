@@ -40,15 +40,15 @@ All of the following fixes have been successfully applied to your application:
 
 **Expected Output:**
 ```
-🌐 Using REMOTE API at https://med.wayrus.co.ke
+🌐 Using REMOTE API at https://diagsolutionsltd.com
 📡 [POST] health - Starting request...
-✅ External API health check passed: https://med.wayrus.co.ke/api.php
+✅ External API health check passed: https://diagsolutionsltd.com/api.php
 ```
 
 **If CORS Error:**
 ```
 ❌ Network Error for health on API
-API Endpoint: https://med.wayrus.co.ke/api.php
+API Endpoint: https://diagsolutionsltd.com/api.php
 🔍 Troubleshooting:
 1. CORS Issue (Most Common):
    - Backend needs: Access-Control-Allow-Origin header
@@ -90,7 +90,7 @@ npm run dev:local
 
 ### For Production (Remote API)
 
-Ensure the backend at `https://med.wayrus.co.ke/api.php` is configured with:
+Ensure the backend at `https://diagsolutionsltd.com/api.php` is configured with:
 
 ```php
 header('Access-Control-Allow-Origin: YOUR_PRODUCTION_DOMAIN');
@@ -129,7 +129,7 @@ VITE_EXTERNAL_API_URL=https://your-api-domain.com/api.php
 2. Implement CORS headers in `api.php` or your API layer
 3. Test with curl command:
    ```bash
-   curl -i -X OPTIONS https://med.wayrus.co.ke/api.php?action=health
+   curl -i -X OPTIONS https://diagsolutionsltd.com/api.php?action=health
    ```
 4. Verify response includes CORS headers
 5. Notify frontend team when ready

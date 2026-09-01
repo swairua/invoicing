@@ -136,10 +136,10 @@ export async function testCORSPreflight(apiUrl: string = '/api'): Promise<Diagno
  */
 export async function testDNSResolution(): Promise<DiagnosticResult> {
   try {
-    console.log('🔍 Testing DNS resolution for med.wayrus.co.ke');
+    console.log('🔍 Testing DNS resolution for diagsolutionsltd.com');
 
     // Use public DNS API
-    const response = await fetch('https://dns.google/resolve?name=med.wayrus.co.ke', {
+    const response = await fetch('https://dns.google/resolve?name=diagsolutionsltd.com', {
       signal: AbortSignal.timeout(5000),
     });
 
@@ -151,7 +151,7 @@ export async function testDNSResolution(): Promise<DiagnosticResult> {
         test: 'DNS Resolution',
         status: hasAnswers ? 'success' : 'failed',
         message: hasAnswers ? '✅ DNS resolved successfully' : '❌ DNS resolution failed',
-        details: { domain: 'med.wayrus.co.ke', hasAnswers },
+        details: { domain: 'diagsolutionsltd.com', hasAnswers },
       };
     } else {
       return {
@@ -211,7 +211,7 @@ export function getTroubleshootingSuggestions(errorType: string): string[] {
       '3. Check if corporate proxy is interfering with HTTPS requests',
       '4. Try disabling VPN temporarily',
       '5. Check with IT/Network team about allowed domains',
-      '6. Verify backend server is running at https://med.wayrus.co.ke',
+      '6. Verify backend server is running at https://diagsolutionsltd.com',
     ],
     timeout: [
       '1. Backend server appears to be slow or unresponsive',

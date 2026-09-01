@@ -45,7 +45,7 @@ export function TokenDebugDiagnostics() {
 
     try {
       const token = localStorage.getItem('med_api_token');
-      const apiUrl = import.meta.env.VITE_EXTERNAL_API_URL || 'https://me.wayrus.co.ke/api.php';
+      const apiUrl = import.meta.env.VITE_EXTERNAL_API_URL || 'https://diagsolutionsltd.com/api.php';
 
       const response = await fetch(`${apiUrl}?action=token_debug`, {
         method: 'GET',

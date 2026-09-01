@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 /**
  * StorageSetup Component (DISABLED)
- * File uploads now use direct API at med.wayrus.co.ke/api.php?action=upload
+ * File uploads now use direct API at diagsolutionsltd.com/api.php?action=upload
  * See: src/utils/directFileUpload.ts
  */
 export default function StorageSetup() {
@@ -21,7 +21,7 @@ export default function StorageSetup() {
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            File uploads are now configured for direct API integration at med.wayrus.co.ke
+            File uploads are now configured for direct API integration at diagsolutionsltd.com
           </AlertDescription>
         </Alert>
 

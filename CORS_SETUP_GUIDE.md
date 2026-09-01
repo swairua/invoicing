@@ -2,7 +2,7 @@
 
 ## Problem
 
-The application is getting "Failed to fetch" errors when trying to communicate with the remote API at `https://med.wayrus.co.ke/api.php` from the frontend deployed on `fly.dev`.
+The application is getting "Failed to fetch" errors when trying to communicate with the remote API at `https://diagsolutionsltd.com/api.php` from the frontend deployed on `fly.dev`.
 
 **Root Cause**: Browser security policy (CORS - Cross-Origin Resource Sharing) blocks requests to the API unless the backend sends proper CORS headers.
 
@@ -10,7 +10,7 @@ The application is getting "Failed to fetch" errors when trying to communicate w
 
 ## Solution: Configure CORS on Backend
 
-The backend at `https://med.wayrus.co.ke/api.php` needs to respond with CORS headers to allow requests from the frontend.
+The backend at `https://diagsolutionsltd.com/api.php` needs to respond with CORS headers to allow requests from the frontend.
 
 ### Required CORS Headers
 
@@ -84,7 +84,7 @@ CORS(app,
 ### 1. "Failed to fetch" in Browser Console
 
 **Check**:
-- Is the API endpoint accessible directly? Try visiting `https://med.wayrus.co.ke/api.php?action=health` in your browser
+- Is the API endpoint accessible directly? Try visiting `https://diagsolutionsltd.com/api.php?action=health` in your browser
 - Are CORS headers present in the response? Open DevTools → Network tab → Check response headers
 - Is the domain in `Access-Control-Allow-Origin` correct?
 
@@ -120,7 +120,7 @@ Configure Vite to proxy requests. The `vite.config.ts` already has some proxy se
 server: {
   proxy: {
     '/api': {
-      target: 'https://med.wayrus.co.ke',
+      target: 'https://diagsolutionsltd.com',
       changeOrigin: true,
       rewrite: (path) => path.replace(/^\/api/, ''),
     }
@@ -141,7 +141,7 @@ curl -i -X OPTIONS \
   -H "Origin: https://your-frontend.fly.dev" \
   -H "Access-Control-Request-Method: POST" \
   -H "Access-Control-Request-Headers: Content-Type" \
-  https://med.wayrus.co.ke/api.php?action=login
+  https://diagsolutionsltd.com/api.php?action=login
 ```
 
 Look for these headers in the response:
@@ -171,7 +171,7 @@ The application uses a **Vite development proxy** to bypass CORS issues during d
 ### How It Works
 
 1. Frontend makes request to `http://localhost:8080/api`
-2. Vite proxy intercepts and forwards to `https://med.wayrus.co.ke/api.php`
+2. Vite proxy intercepts and forwards to `https://diagsolutionsltd.com/api.php`
 3. Response is returned to frontend without CORS blocking
 4. Proxy is **only available in development** - doesn't work in production
 
@@ -211,7 +211,7 @@ Verify backend has CORS headers:
 curl -i -X OPTIONS \
   -H "Origin: https://your-frontend-domain.fly.dev" \
   -H "Access-Control-Request-Method: POST" \
-  https://med.wayrus.co.ke/api.php?action=login
+  https://diagsolutionsltd.com/api.php?action=login
 
 # Expected response headers:
 # access-control-allow-origin: https://your-frontend-domain.fly.dev

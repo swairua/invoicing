@@ -69,7 +69,7 @@ export function PermissionErrorHelper({
             <Alert className="border-blue-200 bg-blue-50">
               <AlertCircle className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-900">
-                <strong>Technical Details:</strong> The external API at med.wayrus.co.ke is rejecting the request. Check that your user role has permission to perform the "{operation}" action on the "{resource}" resource.
+                <strong>Technical Details:</strong> The external API at diagsolutionsltd.com is rejecting the request. Check that your user role has permission to perform the "{operation}" action on the "{resource}" resource.
               </AlertDescription>
             </Alert>
           </CardContent>
