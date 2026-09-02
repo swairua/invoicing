@@ -85,7 +85,8 @@ const Index = () => {
         pdf_template: currentCompany.pdf_template,
         pdf_footer_line1: currentCompany.pdf_footer_line1,
         pdf_footer_line2: currentCompany.pdf_footer_line2,
-        pdf_footer_enabled_docs: currentCompany.pdf_footer_enabled_docs
+        pdf_footer_enabled_docs: currentCompany.pdf_footer_enabled_docs,
+        currency: currentCompany.currency || undefined
       } : undefined;
 
       if (realQuotation) {
