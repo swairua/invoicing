@@ -218,28 +218,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (quickSession?.user && mountedRef.current) {
           console.log('✅ Auth session restored from localStorage');
 
-          // Session found, restore it
-          // Token validation will happen on first API call or during periodic checks
-          setSession(quickSession);
-          setUser(quickSession.user);
-
           // Fetch profile silently in background
           try {
             const userProfile = await fetchProfile(quickSession.user.id);
-            if (mountedRef.current) {
+            if (mountedRef.current && userProfile) {
+              setSession(quickSession);
+              setUser(quickSession.user);
               setProfile(userProfile);
 
               // Update last login silently
-              if (userProfile) {
-                updateLastLogin(quickSession.user.id).catch(err =>
-                  logError('Error updating last login:', err, {
-                    userId: quickSession.user.id,
-                    context: 'backgroundAuth'
-                  })
-                );
-              }
+              updateLastLogin(quickSession.user.id).catch(err =>
+                logError('Error updating last login:', err, {
+                  userId: quickSession.user.id,
+                  context: 'backgroundAuth'
+                })
+              );
+            } else if (mountedRef.current) {
+              clearAuthTokens();
+              setSession(null);
+              setUser(null);
+              setProfile(null);
             }
           } catch (profileError) {
+            clearAuthTokens();
+            if (mountedRef.current) {
+              setSession(null);
+              setUser(null);
+              setProfile(null);
+            }
             logError('Error fetching profile in background:', profileError, {
               context: 'backgroundProfileFetch'
             });

@@ -611,15 +611,18 @@ export class ExternalAPIAdapter implements IDatabase {
 
           // Handle auth failure with user-friendly recovery
           // This will show a toast and optionally redirect to login
-          try {
-            handleAuthFailure({
-              action,
-              table,
-              status: response.status,
-              originalError: new Error(errorMsg),
-            });
-          } catch (err) {
-            console.warn('Error handling auth failure:', err);
+          const isLoginRoute = window.location.pathname === '/' || window.location.pathname === '/login';
+          if (!isLoginRoute) {
+            try {
+              handleAuthFailure({
+                action,
+                table,
+                status: response.status,
+                originalError: new Error(errorMsg),
+              });
+            } catch (err) {
+              console.warn('Error handling auth failure:', err);
+            }
           }
         } else {
           console.warn(`${logPrefix} - HTTP Error ${response.status}: ${errorMsg}`);
