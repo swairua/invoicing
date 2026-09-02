@@ -325,8 +325,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       {/* Desktop Sidebar */}
       <div className="hidden md:flex h-full w-64 flex-col bg-sidebar border-r border-sidebar-border">
         {/* Company Logo/Header */}
-        <div className="flex h-16 items-center border-b border-sidebar-border px-6">
-          <BiolegendLogo size="md" showText={true} className="text-sidebar-foreground" />
+        <div className="flex h-32 items-center border-b border-sidebar-border px-6">
+          <BiolegendLogo size="xl" showText={true} className="text-sidebar-foreground" />
         </div>
 
         {/* Navigation */}
@@ -357,8 +357,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         }`}
       >
         {/* Company Logo/Header */}
-        <div className="flex h-16 items-center border-b border-sidebar-border px-6">
-          <BiolegendLogo size="md" showText={true} className="text-sidebar-foreground" />
+        <div className="flex h-32 items-center border-b border-sidebar-border px-6">
+          <BiolegendLogo size="xl" showText={true} className="text-sidebar-foreground" />
         </div>
 
         {/* Navigation */}

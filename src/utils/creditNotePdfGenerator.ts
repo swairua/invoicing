@@ -141,7 +141,7 @@ export const generateCreditNotePDF = (creditNote: CreditNotePDFData, company?: C
         
         .logo {
           width: 100%;
-          height: 120px;
+          height: 240px;
           border-radius: 8px;
           overflow: hidden;
           grid-column: 1;

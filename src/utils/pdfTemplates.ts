@@ -150,7 +150,7 @@ const defaultTemplate: PDFTemplate = {
       
       .logo {
         width: 100%;
-        height: 120px;
+        height: 240px;
         border-radius: 8px;
         overflow: hidden;
         justify-self: start;
@@ -374,7 +374,7 @@ const helixTemplate: PDFTemplate = {
       
       .header-row-1 {
         display: grid;
-        grid-template-columns: 100px 1fr;
+        grid-template-columns: 200px 1fr;
         gap: 20px;
         align-items: center;
         padding-bottom: 15px;
@@ -394,8 +394,8 @@ const helixTemplate: PDFTemplate = {
       }
       
       .logo {
-        width: 100px;
-        height: 100px;
+        width: 200px;
+        height: 200px;
         border-radius: 4px;
         overflow: hidden;
         justify-self: start;

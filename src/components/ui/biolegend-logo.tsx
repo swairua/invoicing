@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 interface BiolegendLogoProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   showText?: boolean;
   // Optional props to pass company data directly (useful for public pages like login)
   logoUrl?: string;
@@ -28,13 +28,15 @@ export function BiolegendLogo({
   const sizeClasses = {
     sm: "h-10 w-10",
     md: "h-16 w-16",
-    lg: "h-20 w-20"
+    lg: "h-20 w-20",
+    xl: "h-32 w-32 shrink-0"
   };
 
   const textSizeClasses = {
     sm: "text-sm",
     md: "text-lg",
-    lg: "text-2xl"
+    lg: "text-2xl",
+    xl: "text-lg leading-tight md:text-xl"
   };
 
   const fallbackLogoUrl = '/fallback-logo.svg';
@@ -42,7 +44,7 @@ export function BiolegendLogo({
   const companyName = propCompanyName || currentCompany?.name || publicCompany.name || 'Your Company';
 
   return (
-    <div className={cn("flex items-center space-x-3", className)}>
+    <div className={cn("flex min-w-0 items-center space-x-3", className)}>
       {/* Company Logo Image (falls back to default) */}
       <div className={cn("relative", sizeClasses[size])}>
         <img
@@ -60,8 +62,8 @@ export function BiolegendLogo({
 
       {/* Company Text */}
       {showText && companyName && (
-        <div className="flex flex-col">
-          <span className={cn("font-bold text-primary", textSizeClasses[size])}>
+        <div className="min-w-0 flex flex-col">
+          <span className={cn("break-words font-bold text-primary", textSizeClasses[size])}>
             {companyName.toUpperCase()}
           </span>
         </div>
