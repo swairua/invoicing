@@ -137,7 +137,7 @@ const defaultTemplate: PDFTemplate = {
         display: grid;
         grid-template-columns: 1fr 2fr;
         gap: 20px;
-        align-items: flex-start;
+        align-items: center;
         padding-bottom: 20px;
         border-bottom: 2px solid ${primaryColor};
       }
@@ -154,7 +154,7 @@ const defaultTemplate: PDFTemplate = {
         border-radius: 8px;
         overflow: hidden;
         justify-self: start;
-        align-self: start;
+        align-self: center;
       }
       
       .logo img {
@@ -165,6 +165,7 @@ const defaultTemplate: PDFTemplate = {
       
       .company-details-block {
         width: 100%;
+        text-align: right;
       }
       
       .company-name {
@@ -375,7 +376,7 @@ const helixTemplate: PDFTemplate = {
         display: grid;
         grid-template-columns: 100px 1fr;
         gap: 20px;
-        align-items: flex-start;
+        align-items: center;
         padding-bottom: 15px;
       }
       
@@ -398,7 +399,7 @@ const helixTemplate: PDFTemplate = {
         border-radius: 4px;
         overflow: hidden;
         justify-self: start;
-        align-self: start;
+        align-self: center;
       }
       
       .logo img {
@@ -409,6 +410,7 @@ const helixTemplate: PDFTemplate = {
       
       .company-details-block {
         width: 100%;
+        text-align: right;
       }
       
       .company-name {
@@ -655,7 +657,7 @@ const helixGeneralHardwareTemplate: PDFTemplate = {
         display: grid;
         grid-template-columns: auto 1fr;
         gap: 20px;
-        align-items: flex-start;
+        align-items: center;
         padding-bottom: 15px;
       }
 
@@ -689,6 +691,7 @@ const helixGeneralHardwareTemplate: PDFTemplate = {
 
       .company-details-block {
         width: 100%;
+        text-align: right;
       }
 
       .company-name {
