@@ -455,7 +455,7 @@ Email: ${currentCompany?.email || 'info@medplusafrica.com'}`;
   if (error) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Invoices</h1>
             <p className="text-muted-foreground">Create and manage customer invoices</p>
@@ -482,7 +482,7 @@ Email: ${currentCompany?.email || 'info@medplusafrica.com'}`;
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Invoices</h1>
           <p className="text-muted-foreground">
