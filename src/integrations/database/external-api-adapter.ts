@@ -22,6 +22,7 @@ export class ExternalAPIAdapter implements IDatabase {
   private failedValidationAttempts: number = 0;
   private lastValidationAttemptTime: number = 0;
   private lastLoginTime: number | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(apiUrl?: string) {
     try {
@@ -68,6 +69,14 @@ export class ExternalAPIAdapter implements IDatabase {
    */
   private getAuthToken(): string | null {
     return localStorage.getItem('med_api_token');
+  }
+
+  private getAuthHeaders(): Record<string, string> {
+    const token = this.getAuthToken();
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
   }
 
   /**
@@ -177,82 +186,55 @@ export class ExternalAPIAdapter implements IDatabase {
    * Attempt to refresh the token using the refresh endpoint
    * Implements retry logic with exponential backoff
    */
-  private async attemptTokenRefresh(): Promise<void> {
-    try {
-      const userId = localStorage.getItem('med_api_user_id');
+  private async attemptTokenRefresh(): Promise<boolean> {
+    if (this.refreshPromise) return this.refreshPromise;
 
-      // Try primary refresh endpoint
-      const refreshUrl = `${this.apiBase}?action=refresh_token`;
+    this.refreshPromise = (async () => {
+      try {
+        const userId = localStorage.getItem('med_api_user_id');
+        const refreshUrl = `${this.apiBase}?action=refresh_token`;
 
-      console.log('🔄 Attempting token refresh with user_id:', userId?.substring(0, 8) + '...');
-      console.log(`   Failed attempts so far: ${this.failedValidationAttempts}/3`);
+        console.log('🔄 Attempting token refresh with user_id:', userId?.substring(0, 8) + '...');
+        const response = await fetch(refreshUrl, {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ user_id: userId }),
+        });
+        const result = await response.json().catch(() => null);
 
-      const response = await fetch(refreshUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId }),
-      });
+        if (response.ok && result?.token) {
+          this.setAuthToken(result.token);
+          this.failedValidationAttempts = 0;
+          console.log('✅ Token refreshed successfully');
+          return true;
+        }
 
-      const result = await response.json().catch(() => null);
+        console.warn('⚠️ Primary token refresh failed (status:', response.status, '), trying check_auth endpoint...');
+        const checkResponse = await fetch(`${this.apiBase}?action=check_auth`, {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ token: this.getAuthToken() }),
+        });
+        const checkResult = await checkResponse.json().catch(() => null);
 
-      if (response.ok && result?.token) {
-        // Store the new token and reset counter on success
-        this.setAuthToken(result.token);
-        this.failedValidationAttempts = 0;
-        console.log('✅ Token refreshed successfully');
-        return;
+        if (checkResponse.ok && checkResult?.id) {
+          this.failedValidationAttempts = 0;
+          console.log('✅ Token is valid (check_auth succeeded), continuing without refresh');
+          return true;
+        }
+
+        this.failedValidationAttempts++;
+        return false;
+      } catch (error) {
+        console.warn('⚠️ Token refresh error:', error);
+        this.failedValidationAttempts++;
+        return false;
+      } finally {
+        this.refreshPromise = null;
       }
+    })();
 
-      // If primary refresh fails, try alternative approach
-      console.warn('⚠️ Primary token refresh failed (status:', response.status, '), trying check_auth endpoint...');
-
-      // Try checking if we can validate with current token
-      const checkUrl = `${this.apiBase}?action=check_auth`;
-      const checkResponse = await fetch(checkUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: this.getAuthToken() }),
-      });
-
-      const checkResult = await checkResponse.json().catch(() => null);
-
-      if (checkResponse.ok && checkResult?.id) {
-        // Token is actually valid - maybe the refresh endpoint just doesn't exist
-        this.failedValidationAttempts = 0;
-        console.log('✅ Token is valid (check_auth succeeded), continuing without refresh');
-        return;
-      }
-
-      // Token validation failed - increment counter
-      this.failedValidationAttempts++;
-      console.warn(`⚠️ Token validation failed (attempt ${this.failedValidationAttempts}/3)`);
-
-      // Only clear token after 3 failed attempts, not on first failure
-      if (this.failedValidationAttempts >= 3) {
-        console.error('❌ Token is invalid after 3 attempts - clearing authentication');
-        this.clearAuthToken();
-        localStorage.removeItem('med_api_user_id');
-        localStorage.removeItem('med_api_user_email');
-        this.failedValidationAttempts = 0;
-      } else {
-        console.log(`⏳ Deferring token clearing until next validation attempt (need ${3 - this.failedValidationAttempts} more failures)`);
-      }
-
-    } catch (error) {
-      console.warn('⚠️ Token refresh error (network issue):', error);
-      // Increment counter for network errors too
-      this.failedValidationAttempts++;
-      console.warn(`⚠️ Network validation attempt failed (${this.failedValidationAttempts}/3)`);
-
-      if (this.failedValidationAttempts >= 3) {
-        // Only clear on persistent failures
-        console.warn('❌ Too many failed validation attempts - clearing token');
-        this.clearAuthToken();
-        localStorage.removeItem('med_api_user_id');
-        localStorage.removeItem('med_api_user_email');
-        this.failedValidationAttempts = 0;
-      }
-    }
+    return this.refreshPromise;
   }
 
   private async apiCall<T>(
@@ -573,11 +555,8 @@ export class ExternalAPIAdapter implements IDatabase {
             console.warn('Error running diagnostics:', diagError);
           }
 
-          // Try to refresh token as a backup mechanism
-          try {
-            await this.attemptTokenRefresh();
-
-            // Check if we still have a token after refresh attempt
+          const refreshed = await this.attemptTokenRefresh();
+          if (refreshed) {
             const newToken = this.getAuthToken();
             if (newToken) {
               console.log('🔄 Retrying request with refreshed token...');
@@ -589,27 +568,21 @@ export class ExternalAPIAdapter implements IDatabase {
                 body: body ? JSON.stringify(body) : undefined,
                 signal: controller.signal,
               });
-
               const retryResult = await retryResponse.json().catch(() => ({}));
 
               if (retryResponse.ok) {
                 console.log(`✅ ${logPrefix} - Success after token refresh`);
                 return { data: retryResult.data || retryResult, error: null, status: retryResponse.status };
-              } else {
-                // Still failed after refresh - log additional details
-                console.error(`❌ ${logPrefix} - Still failed after token refresh`);
-                console.error(`Retry response status: ${retryResponse.status} ${retryResponse.statusText}`);
-                console.error(`Response:`, retryResult);
               }
-            } else {
-              console.warn('⚠️ No token available after refresh attempt');
+
+              console.error(`❌ ${logPrefix} - Still failed after token refresh`);
+              console.error(`Retry response status: ${retryResponse.status} ${retryResponse.statusText}`);
             }
-          } catch (refreshError) {
-            console.warn('⚠️ Emergency token refresh failed:', refreshError);
           }
 
-          // Clear token since it's definitely invalid at this point
           this.clearAuthToken();
+          localStorage.removeItem('med_api_user_id');
+          localStorage.removeItem('med_api_user_email');
 
           // Provide detailed error message with debugging steps
           let errorMsg = 'Authentication failed';
@@ -921,7 +894,7 @@ export class ExternalAPIAdapter implements IDatabase {
       try {
         const response = await fetch(`${this.apiBase}?action=check_auth`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: this.getAuthHeaders(),
           body: JSON.stringify({ token: this.getAuthToken() }),
           signal: controller.signal,
         });

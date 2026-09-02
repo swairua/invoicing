@@ -23,6 +23,7 @@ import {
 import { generateCustomerStatementPDF } from '@/utils/pdfGenerator';
 import { exportCustomerStatementsToCSV, exportCustomerStatementsToExcel, exportCustomerStatementSummaryToCSV } from '@/utils/csvExporter';
 import { toast } from 'sonner';
+import { logCustomerStatement } from '@/utils/auditLogger';
 import { useCurrentCompany } from '@/contexts/CompanyContext';
 import { useCustomers, usePayments } from '@/hooks/useDatabase';
 import { useInvoicesFixed as useInvoices } from '@/hooks/useInvoicesFixed';
@@ -143,22 +144,60 @@ const StatementOfAccounts = () => {
 
   const filteredStatements = computedStatements.filter(statement => {
     const matchesSearch = statement.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         statement.customerCode.toLowerCase().includes(searchTerm.toLowerCase());
+                         String(statement.customerCode || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCustomer = selectedCustomer === 'all' || statement.customerId.toString() === selectedCustomer;
     const matchesOverdue = !showOverdueOnly || statement.overdueAmount > 0;
     return matchesSearch && matchesCustomer && matchesOverdue;
   });
 
-  const handleDownloadStatement = async (statement: any) => {
-    try {
+  const statementDate = new Date().toISOString().split('T')[0];
+
+  const getStatementRecordIds = (statement: { customerId: string }) => {
+    const customerInvoices = invoices?.filter(inv => inv.customer_id === statement.customerId) || [];
+    const invoiceIds = customerInvoices.map(inv => inv.id);
+    const customerPayments = payments?.filter(pay => invoiceIds.includes(pay.invoice_id)) || [];
+    const customerCreditNotes = creditNotes?.filter(cn => cn.customer_id === statement.customerId) || [];
+
+    return {
+      invoiceIds,
+      paymentIds: customerPayments.map(pay => pay.id),
+      creditNoteIds: customerCreditNotes.map(cn => cn.id),
+    };
+  };
+
+  const exportData = filteredStatements.map(s => ({
+    customer_id: s.customerId,
+    customer_name: s.customerName,
+    customer_email: s.email,
+    total_outstanding: s.currentBalance,
+    current_due: s.agingAnalysis.current,
+    overdue_amount: s.overdueAmount,
+    days_overdue: 0,
+    last_payment_date: s.lastPaymentDate,
+    last_payment_amount: s.lastPaymentAmount,
+    invoice_count: s.invoiceCount,
+  }));
+
+  const auditExport = (format: 'csv' | 'summary_csv' | 'xlsx') => {
+    void Promise.all(filteredStatements.map(statement => {
       const customer = customers?.find(c => c.id === statement.customerId);
+      return customer
+        ? logCustomerStatement(customer, currentCompany?.id, statementDate, format, getStatementRecordIds(statement), true)
+        : Promise.resolve();
+    }));
+  };
+
+  const handleDownloadStatement = async (statement: { customerId: string; customerName: string }) => {
+    const customer = customers?.find(c => c.id === statement.customerId);
+    try {
       if (!customer) {
         toast.error('Customer not found in database');
         return;
       }
 
       const customerInvoices = invoices?.filter(inv => inv.customer_id === customer.id) || [];
-      const customerPayments = payments?.filter(pay => pay.customer_id === customer.id) || [];
+      const invoiceIds = customerInvoices.map(inv => inv.id);
+      const customerPayments = payments?.filter(pay => invoiceIds.includes(pay.invoice_id)) || [];
       const customerCreditNotes = creditNotes?.filter(cn => cn.customer_id === customer.id) || [];
 
       const companyDetails = currentCompany ? {
@@ -175,48 +214,34 @@ const StatementOfAccounts = () => {
       } : undefined;
 
       await generateCustomerStatementPDF(customer, customerInvoices, customerPayments, customerCreditNotes, {
-        statement_date: new Date().toISOString().split('T')[0]
+        statement_date: statementDate
       }, companyDetails);
+      await logCustomerStatement(customer, currentCompany?.id, statementDate, 'pdf', {
+        invoiceIds,
+        paymentIds: customerPayments.map(pay => pay.id),
+        creditNoteIds: customerCreditNotes.map(cn => cn.id),
+      }, true);
 
       toast.success(`Statement PDF generated for ${statement.customerName}`);
     } catch (error) {
       console.error('Error generating statement PDF:', error);
+      if (customer) {
+        await logCustomerStatement(customer, currentCompany?.id, statementDate, 'pdf', getStatementRecordIds(statement), false);
+      }
       toast.error('Failed to generate statement PDF. Please try again.');
     }
   };
 
   const handleBulkExport = () => {
-    const data = filteredStatements.map(s => ({
-      customer_id: s.customerId,
-      customer_name: s.customerName,
-      customer_email: s.email,
-      total_outstanding: s.currentBalance,
-      current_due: s.agingAnalysis.current,
-      overdue_amount: s.overdueAmount,
-      days_overdue: 0,
-      last_payment_date: s.lastPaymentDate,
-      last_payment_amount: s.lastPaymentAmount,
-      invoice_count: s.invoiceCount,
-    }));
-    exportCustomerStatementsToCSV(data);
-    toast.success(`Exported ${data.length} customer statements to CSV`);
+    exportCustomerStatementsToCSV(exportData);
+    auditExport('csv');
+    toast.success(`Exported ${exportData.length} customer statements to CSV`);
   };
 
   const handleExcelExport = () => {
-    const data = filteredStatements.map(s => ({
-      customer_id: s.customerId,
-      customer_name: s.customerName,
-      customer_email: s.email,
-      total_outstanding: s.currentBalance,
-      current_due: s.agingAnalysis.current,
-      overdue_amount: s.overdueAmount,
-      days_overdue: 0,
-      last_payment_date: s.lastPaymentDate,
-      last_payment_amount: s.lastPaymentAmount,
-      invoice_count: s.invoiceCount,
-    }));
-    exportCustomerStatementsToExcel(data);
-    toast.success(`Exported ${data.length} customer statements to Excel`);
+    exportCustomerStatementsToExcel(exportData);
+    auditExport('xlsx');
+    toast.success(`Exported ${exportData.length} customer statements to Excel`);
   };
 
   const getStatusInfo = (currentBalance: number, overdueAmount: number, creditLimit: number) => {
@@ -258,19 +283,8 @@ const StatementOfAccounts = () => {
             Export Excel
           </Button>
           <Button variant="outline" onClick={() => {
-            const data = filteredStatements.map(s => ({
-              customer_id: s.customerId,
-              customer_name: s.customerName,
-              customer_email: s.email,
-              total_outstanding: s.currentBalance,
-              current_due: s.agingAnalysis.current,
-              overdue_amount: s.overdueAmount,
-              days_overdue: 0,
-              last_payment_date: s.lastPaymentDate,
-              last_payment_amount: s.lastPaymentAmount,
-              invoice_count: s.invoiceCount,
-            }));
-            exportCustomerStatementSummaryToCSV(data);
+            exportCustomerStatementSummaryToCSV(exportData);
+            auditExport('summary_csv');
             toast.success('Summary exported to CSV');
           }}>
             <FileText className="mr-2 h-4 w-4" />

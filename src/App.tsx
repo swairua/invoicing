@@ -424,7 +424,10 @@ const App = () => {
                 <Route
                   path="/app/reports/statements"
                   element={
-                    <ProtectedRoute requireAuth={true}>
+                    <ProtectedRoute
+                      requireAuth={true}
+                      requiredPermissions={routePermissionMap['/app/reports/statements'].requiredPermissions}
+                    >
                       <StatementOfAccounts />
                     </ProtectedRoute>
                   }
