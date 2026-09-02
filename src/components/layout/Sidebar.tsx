@@ -206,6 +206,13 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   };
 
   const renderSidebarItem = (item: SidebarItem) => {
+    if (
+      (userIsAdmin && item.title === 'Transport') ||
+      (!userIsAdmin && item.title === 'Admin')
+    ) {
+      return null;
+    }
+
     const hasChildren = item.children && item.children.length > 0;
     const isExpanded = expandedItems.includes(item.title);
     const isActive = isItemActive(item.href);

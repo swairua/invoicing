@@ -22,8 +22,8 @@ export function handleAuthFailure(context?: AuthFailureContext) {
     clearAuthTokens();
 
     // Show user-friendly error message
-    const message = context?.action 
-      ? `Authentication failed while ${context.action}. Please log in again.`
+    const message = context?.action
+      ? 'Authentication failed while read. Please log in again.'
       : 'Your session has expired. Please log in again.';
 
     console.warn(`🔐 Auth failure handled:`, {
