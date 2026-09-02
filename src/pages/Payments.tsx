@@ -298,14 +298,14 @@ export default function Payments() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Payments</h1>
           <p className="text-muted-foreground">
             Track and manage customer payments (All amounts in KES)
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Button className="gradient-primary text-primary-foreground hover:opacity-90 shadow-card" size="lg" onClick={handleCreateDirectReceipt} disabled={!canCreatePayment('create_payment')}>
             <Plus className="h-4 w-4 mr-2" />
             Direct Receipt
