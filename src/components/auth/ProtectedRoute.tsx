@@ -74,9 +74,9 @@ export function ProtectedRoute({
       permissionsLoading,
     });
 
-    const hasPermission = requireAllPermissions
+    const hasPermission = isAdmin || (requireAllPermissions
       ? canAll(requiredPermissions)
-      : canAny(requiredPermissions);
+      : canAny(requiredPermissions));
 
     console.log('🔐 [ProtectedRoute] Permission check result:', {
       requiredPermissions,
