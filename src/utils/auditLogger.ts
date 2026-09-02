@@ -1,10 +1,10 @@
 import { apiClient } from '@/integrations/api';
 import { executeSQL } from '@/utils/execSQL';
 
-export type AuditedEntity = 'quotation' | 'proforma' | 'invoice' | 'credit_note' | 'user_invitation' | 'user_creation' | 'role' | 'permission' | 'permission_check' | 'permission_denied' | 'role_assignment';
+export type AuditedEntity = 'quotation' | 'proforma' | 'invoice' | 'credit_note' | 'statement' | 'user_invitation' | 'user_creation' | 'role' | 'permission' | 'permission_check' | 'permission_denied' | 'role_assignment';
 
 interface AuditLogEntry {
-  action: 'DELETE' | 'CREATE' | 'APPROVE' | 'INVITE';
+  action: 'DELETE' | 'CREATE' | 'APPROVE' | 'INVITE' | 'EXPORT' | 'GENERATE';
   entity_type: AuditedEntity;
   record_id: string | null;
   company_id?: string | null;
@@ -76,22 +76,54 @@ async function getActorInfo(): Promise<{ user_id: string | null; email: string |
 }
 
 async function insertAuditLog(entry: AuditLogEntry): Promise<void> {
-  const insertAttempt = await apiClient.insert('audit_logs', entry);
+  try {
+    const insertAttempt = await apiClient.insert('audit_logs', entry);
 
-  if (insertAttempt.error) {
-    // Try once more after ensuring schema
-    try {
+    if (insertAttempt.error) {
       await ensureAuditLogSchema();
       const retry = await apiClient.insert('audit_logs', entry);
       if (retry.error) {
-        // Swallow to not block operations; surface in console for diagnostics
-        // eslint-disable-next-line no-console
         console.warn('Audit log insert failed:', retry.error?.message || retry.error);
       }
-    } catch (e: any) {
-      // eslint-disable-next-line no-console
-      console.warn('Audit log ensure+insert failed:', e?.message || e);
     }
+  } catch (error: any) {
+    console.warn('Audit log insert failed:', error?.message || error);
+  }
+}
+
+export async function logCustomerStatement(
+  customer: { id: string; name: string; customer_code?: string | null },
+  companyId: string | null | undefined,
+  statementDate: string,
+  outputFormat: 'pdf' | 'csv' | 'summary_csv' | 'xlsx',
+  sourceRecordIds: { invoiceIds: string[]; paymentIds: string[]; creditNoteIds: string[] },
+  success: boolean,
+  dateRange?: { start?: string | null; end?: string | null }
+): Promise<void> {
+  try {
+    await ensureAuditLogSchema();
+    const { user_id: actor_user_id, email: actor_email } = await getActorInfo();
+    await insertAuditLog({
+      action: outputFormat === 'pdf' ? 'GENERATE' : 'EXPORT',
+      entity_type: 'statement',
+      record_id: customer.id,
+      company_id: companyId ?? null,
+      actor_user_id,
+      actor_email,
+      details: {
+        customer_id: customer.id,
+        customer_code: customer.customer_code ?? null,
+        customer_name: customer.name,
+        statement_date: statementDate,
+        date_range: dateRange ?? { start: null, end: null },
+        output_format: outputFormat,
+        success,
+        source_record_ids: sourceRecordIds,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.warn('Customer statement audit failed:', error);
   }
 }
 
