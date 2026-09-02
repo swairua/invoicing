@@ -122,7 +122,7 @@ const CustomerRow = React.memo(({
         </Badge>
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex items-center justify-end space-x-1">
+        <div className="flex flex-wrap items-center justify-end gap-1">
           {/* Icon Actions */}
           <div className="flex space-x-1">
             <Button
@@ -384,7 +384,7 @@ export default function OptimizedCustomers() {
   if (loadingCustomers && currentPage === 1) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Customers</h1>
             <p className="text-muted-foreground">Loading customer data...</p>
@@ -404,7 +404,7 @@ export default function OptimizedCustomers() {
   if (customersError) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Customers</h1>
             <p className="text-muted-foreground">Error loading customers</p>
@@ -430,7 +430,7 @@ export default function OptimizedCustomers() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Customers</h1>
           <p className="text-muted-foreground">
@@ -438,7 +438,7 @@ export default function OptimizedCustomers() {
             {customersData && ` (${customersData.totalCount} customers)`}
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Button variant="outline" onClick={handleRefresh} disabled={loadingCustomers}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loadingCustomers ? 'animate-spin' : ''}`} />
             Refresh
@@ -639,7 +639,7 @@ export default function OptimizedCustomers() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center mt-4 pt-4 border-t">
               <p className="text-sm text-muted-foreground">
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, customersData?.totalCount || 0)} of {customersData?.totalCount || 0} customers
               </p>

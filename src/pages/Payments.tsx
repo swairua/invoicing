@@ -362,8 +362,8 @@ export default function Payments() {
       {/* Filters and Search */}
       <Card className="shadow-card">
         <CardContent className="pt-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:space-x-4">
+            <div className="relative w-full max-w-md flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search payments..."
@@ -404,7 +404,8 @@ export default function Payments() {
               )}
             </div>
           ) : (
-            <Table>
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-[800px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Payment Number</TableHead>
@@ -485,7 +486,8 @@ export default function Payments() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
