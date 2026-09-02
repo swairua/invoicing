@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 interface BiolegendLogoProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   showText?: boolean;
   // Optional props to pass company data directly (useful for public pages like login)
   logoUrl?: string;
@@ -28,13 +28,15 @@ export function BiolegendLogo({
   const sizeClasses = {
     sm: "h-10 w-10",
     md: "h-16 w-16",
-    lg: "h-20 w-20"
+    lg: "h-20 w-20",
+    xl: "h-32 w-32"
   };
 
   const textSizeClasses = {
     sm: "text-sm",
     md: "text-lg",
-    lg: "text-2xl"
+    lg: "text-2xl",
+    xl: "text-2xl"
   };
 
   const fallbackLogoUrl = '/fallback-logo.svg';

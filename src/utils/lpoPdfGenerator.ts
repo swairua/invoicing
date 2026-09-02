@@ -69,8 +69,8 @@ export const generateLPOPDF = async (lpo: LPOPDFData, company: CompanyData) => {
   if (company.logo_url) {
     try {
       const logoBase64 = await loadImageAsBase64(company.logo_url);
-      doc.addImage(logoBase64, 'PNG', 20, yPosition, 40, 20);
-      yPosition += 25;
+      doc.addImage(logoBase64, 'PNG', 20, yPosition, 80, 40);
+      yPosition += 45;
     } catch (error) {
       console.warn('Failed to load logo:', error);
       // Continue without logo on failure
