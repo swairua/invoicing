@@ -35,12 +35,12 @@ export default {
 					foreground: 'hsl(var(--secondary-foreground))',
 					hover: 'hsl(var(--secondary-hover))'
 				},
-				// Maroon brand color palette (#800000)
+				// Brand palette - taken from the Diag Solutions logo (teal #00eedd)
 				maroon: {
-					DEFAULT: '#800000',
-					light: '#990000',
-					dark: '#660000',
-					foreground: '#ffffff',
+					DEFAULT: '#00eedd',
+					light: '#c8f9f5',
+					dark: '#14b8ac',
+					foreground: '#0033aa',
 				},
 				// Grey/neutral palette
 				neutral: {

@@ -16,11 +16,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 10% 15%;
 
-    /* Primary - Maroon */
-    --primary: 0 100% 25%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 100% 22%;
-    --primary-light: 0 100% 94%;
+    /* Primary - Logo Teal (#00eedd from the Diag Solutions logo) */
+    --primary: 176 100% 47%;
+    --primary-foreground: 222 100% 33%;
+    --primary-hover: 176 80% 40%;
+    --primary-light: 175 80% 88%;
 
     /* Secondary - Grey/Dark Grey */
     --secondary: 210 10% 25%;
@@ -44,27 +44,27 @@
     --muted: 210 5% 96%;
     --muted-foreground: 210 5% 45%;
 
-    --accent: 280 45% 95%;
-    --accent-foreground: 280 45% 42%;
+    --accent: 176 60% 88%;
+    --accent-foreground: 176 60% 30%;
 
     --border: 210 10% 88%;
     --input: 210 10% 88%;
-    --ring: 280 45% 42%;
+    --ring: 176 100% 47%;
 
     --radius: 0.5rem;
 
-    /* Sidebar - Maroon Theme */
+    /* Sidebar - Logo Teal Theme */
     --sidebar-background: 0 0% 15%;
     --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 0 100% 25%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 20%;
-    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-primary: 176 100% 47%;
+    --sidebar-primary-foreground: 222 100% 33%;
+    --sidebar-accent: 176 20% 25%;
+    --sidebar-accent-foreground: 176 60% 85%;
     --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 100% 25%;
+    --sidebar-ring: 176 100% 47%;
 
-    /* Maroon Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(0 100% 25%), hsl(210 10% 25%));
+    /* Teal Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(176 100% 47%), hsl(176 60% 40%));
     --gradient-secondary: linear-gradient(135deg, hsl(0 0% 98%), hsl(0 0% 92%));
     --gradient-success: linear-gradient(135deg, hsl(140 50% 45%), hsl(140 50% 50%));
     
@@ -79,7 +79,7 @@
   }
 
   .dark {
-    /* Dark Mode - Maroon Theme */
+    /* Dark Mode - Logo Teal Theme */
     --background: 210 10% 6%;
     --foreground: 0 0% 92%;
 
@@ -89,10 +89,10 @@
     --popover: 0 0% 12%;
     --popover-foreground: 0 0% 92%;
 
-    --primary: 0 100% 40%;
+    --primary: 176 70% 55%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 100% 35%;
-    --primary-light: 0 100% 18%;
+    --primary-hover: 176 60% 48%;
+    --primary-light: 176 40% 22%;
 
     --secondary: 210 10% 60%;
     --secondary-foreground: 0 0% 20%;
@@ -113,21 +113,21 @@
     --muted: 210 10% 18%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 100% 40%;
+    --accent: 176 30% 30%;
+    --accent-foreground: 176 60% 85%;
 
     --border: 210 10% 20%;
     --input: 210 10% 20%;
-    --ring: 0 100% 40%;
+    --ring: 176 70% 55%;
 
     --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 0 100% 40%;
+    --sidebar-primary: 176 70% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 12%;
     --sidebar-accent-foreground: 0 0% 85%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 0 100% 40%;
+    --sidebar-ring: 176 70% 55%;
   }
 }
 
