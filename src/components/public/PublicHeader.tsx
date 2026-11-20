@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { useCompanyConfig } from '@/hooks/useCompanyConfig';
 
 // Nav routes for the public website (home = "/" = PublicCategories).
+// "Why Haemonetics" was removed — the public header no longer links to the
+// dormant landing-page anchors ("#why", "#team"); pages are fully routed now.
 const NAV = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about-us' },
   { label: 'Products', href: '/products' },
-  { label: 'Why Haemonetics', href: '/home#why' },
-  { label: 'Team', href: '/home#team' },
   { label: 'Contact', href: '/contact' },
 ];
 
@@ -27,17 +27,17 @@ export function PublicHeader() {
               <img
                 src={company.logo_url}
                 alt={company.name}
-                className="h-10 w-auto object-contain"
+                className="h-16 w-auto sm:h-20 object-contain"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-maroon to-neutral-700 flex items-center justify-center text-white font-bold">
+                <div className="h-16 w-16 sm:h-20 rounded-xl bg-gradient-to-br from-maroon to-neutral-700 flex items-center justify-center text-white font-bold text-xl">
                 H
               </div>
             )}
-            <span className="text-xl font-bold text-slate-900">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
               {company.name || 'Haemonetics East Africa Limited'}
             </span>
           </Link>

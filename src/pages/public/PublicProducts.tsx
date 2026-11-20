@@ -1,176 +1,218 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ShoppingCart } from 'lucide-react';
+import { Search, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useWebCategories, useWebVariants, WebCategoryForPublic, WebVariantForPublic } from '@/hooks/useWebCategories';
 import { useCompanyConfig } from '@/hooks/useCompanyConfig';
 import { useSEO } from '@/hooks/useSEO';
-import { generateOrganizationSchema } from '@/utils/seoHelpers';
-import { usePublicProducts } from '@/hooks/usePublicSiteData';
-import { PRODUCT_CATEGORIES, formatCurrency } from './public-site-data';
+import { generateWebPageSchema, useBreadcrumbSchema } from '@/utils/seoHelpers';
 import { PublicHeader } from '@/components/public/PublicHeader';
 import { PublicFooter } from '@/components/PublicFooter';
+import { BreadcrumbNav } from '@/components/ui/breadcrumb-nav';
 
+/**
+ * Products page: products grouped under Laboratory and Imaging
+ * (web_categories → web_variants, read via the unauthenticated
+ * public_read endpoint). Each item links to its department page
+ * (/products/:slug) via ProductDetail.
+ */
 export default function PublicProducts() {
   const company = useCompanyConfig();
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
+
+  const { categories, loading: categoriesLoading } = useWebCategories();
+  const { variants, loading: variantsLoading } = useWebVariants();
+  const loading = categoriesLoading || variantsLoading;
 
   useSEO(
     {
-      title: `Products - ${company.name || 'Haemonetics East Africa Limited'}`,
+      title: `${company.name} Products`,
       description:
-        'Browse our catalogue of laboratory reagents, instrumentation, consumables and diagnostic equipment across East Africa.',
+        'Browse our laboratory and imaging products. Laboratory: hematology, chemistry, microbiology and immunology. Imaging: CT Scan, X-Ray and ultrasound.',
       keywords:
-        'laboratory equipment, reagents, diagnostics, medical supplies, Kenya, catalog',
+        'laboratory equipment, imaging equipment, CT scanner, X-ray, ultrasound, diagnostics, medical supplies',
       url: '/products',
       image: company.logo_url,
     },
-    generateOrganizationSchema(company)
+    generateWebPageSchema({
+      title: `Products - ${company.name}`,
+      description: 'Laboratory and imaging products grouped by department',
+      url: '/products',
+    }, company)
   );
 
-  const { data: products = [], isLoading } = usePublicProducts(200);
+  useBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Products', url: '/products' },
+  ], company);
 
-  const filtered = useMemo(() => {
-    return products.filter((p: any) => {
-      const matchesSearch =
-        !search ||
-        (p.name || p.notes || productCode(p)).toLowerCase().includes(search.toLowerCase());
-      const matchesCategory =
-        activeCategory === 'All' ||
-        p.category === activeCategory ||
-        true; // categories are free-text; show all by default, filter by search only
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, search, activeCategory]);
+  // Filter items by search
+  const filteredVariants = useMemo(() => {
+    if (!search) return variants;
+    const needle = search.toLowerCase().trim();
+    return variants.filter(
+      (v) =>
+        v.name.toLowerCase().includes(needle) ||
+        v.sku?.toLowerCase().includes(needle) ||
+        v.description?.toLowerCase().includes(needle)
+    );
+  }, [variants, search]);
+
+  // Group (filtered) variants under their category
+  const filteredByCategory = useMemo(() => {
+    const map = new Map<string, WebVariantForPublic[]>();
+    for (const v of filteredVariants) {
+      const key = String(v.category_id);
+      const list = map.get(key) || [];
+      list.push(v);
+      map.set(key, list);
+    }
+    return map;
+  }, [filteredVariants]);
 
   return (
     <div className="min-h-screen bg-white text-slate-800 font-sans">
       <PublicHeader />
 
-      <section className="bg-gradient-to-br from-slate-50 via-neutral-100 to-neutral-50 py-16">
+      <BreadcrumbNav items={[
+        { label: 'Products', href: '/products' },
+      ]} />
+
+      {/* Hero */}
+      <section className="bg-gradient-to-r from-maroon to-neutral-700 text-white py-14 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-extrabold text-slate-900">
-            Our catalogue
-          </h1>
-          <p className="text-slate-600 mt-4 max-w-2xl">
-            Laboratory reagents, instrumentation, consumables and diagnostic
-            equipment backed by genuine manufacturer warranty and local
-            technical support across East Africa.
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Our Products</h1>
+          <p className="mt-4 text-lg text-white/85 max-w-2xl">
+            Laboratory and imaging products grouped under your departments.
           </p>
+          <Badge className="mt-6 bg-white/20 text-white border-white/30">
+            {categories.length} departments • {variants.length} items
+          </Badge>
         </div>
       </section>
 
-      <section className="py-10 bg-white border-b border-slate-200">
+      {/* Search */}
+      <section className="py-8 bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="flex-1 relative max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                placeholder="Search products..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {['All', ...PRODUCT_CATEGORIES.slice(0, 5)].map((cat) => (
-                <Badge
-                  key={cat}
-                  variant={activeCategory === cat ? 'default' : 'secondary'}
-                  className={
-                    activeCategory === cat
-                      ? 'bg-maroon text-white'
-                      : 'text-slate-700'
-                  }
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  {cat}
-                </Badge>
-              ))}
-            </div>
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Search products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </div>
       </section>
 
-      <section className="py-16">
+      {/* Products grouped under Laboratory / Imaging */}
+      <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <Skeleton key={i} className="h-56 w-full rounded-xl" />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-16 text-slate-500">
-              <ShoppingCart className="h-10 w-10 mx-auto mb-3 opacity-40" />
-              <p>No products match your search. Try adjusting the keywords.</p>
-            </div>
+          {loading ? (
+            <>
+              <Skeleton className="h-10 w-64 rounded-md mb-8" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-48 w-full rounded-xl" />
+                ))}
+              </div>
+            </>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((product: any) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <div className="space-y-14">
+              {categories
+                .filter((cat: WebCategoryForPublic) =>
+                  filteredByCategory.get(String(cat.id))?.length
+                )
+                .map((cat: WebCategoryForPublic) => {
+                  const items = filteredByCategory.get(String(cat.id)) || [];
+                  return (
+                    <div key={cat.id}>
+                      <div className="flex items-center justify-between mb-5">
+                        <div>
+                          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                            <span className="text-3xl">{cat.icon}</span>
+                            {cat.name}
+                          </h2>
+                          {cat.description && (
+                            <p className="text-slate-500 mt-1 max-w-2xl">{cat.description}</p>
+                          )}
+                        </div>
+                        <Link
+                          to={`/products/${cat.slug}`}
+                          className="text-sm font-semibold text-maroon hover:underline"
+                        >
+                          View department →
+                        </Link>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {items.map((v: WebVariantForPublic) => (
+                          <ProductItem key={v.id} variant={v} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+
+              {filteredVariants.length === 0 && !loading && (
+                <div className="text-center py-16">
+                  <p className="text-slate-500">
+                    No products match your search. Try adjusting the keywords.
+                  </p>
+                </div>
+              )}
             </div>
           )}
-
-          <div className="text-center mt-12">
-            <Button
-              asChild
-              variant="outline"
-              className="border-slate-300 bg-white"
-            >
-              <Link to="/home">
-                <span className="font-semibold">Back to website</span>
-              </Link>
-            </Button>
-          </div>
         </div>
       </section>
+
+      <div className="text-center mt-12">
+        <Button asChild variant="outline" className="border-slate-300 bg-white">
+          <Link to="/">
+            <span className="font-semibold">Back to website</span>
+          </Link>
+        </Button>
+      </div>
 
       <PublicFooter />
     </div>
   );
 }
 
-function productCode(p: any): string {
-  return p?.product_code || p?.sku || '';
-}
-
-function ProductCard({ product }: { product: any }) {
-  const name = product.name || product.notes || productCode(product) || 'Product';
-  const desc = product.description || product.notes || '';
-  const price = product.selling_price ?? product.cost_price ?? product.unit_price;
-  const stock = product.stock_quantity ?? product.quantity;
+function ProductItem({ variant }: { variant: WebVariantForPublic }) {
   return (
-    <Card className="border border-slate-200 hover:shadow-md transition-shadow group flex flex-col h-full">
-      <CardContent className="p-5 flex-1 flex flex-col">
-        <div className="flex-1">
-            <h3 className="font-semibold text-slate-900 group-hover:text-maroon-dark line-clamp-1">
-            {name}
-          </h3>
-          {desc && (
-            <p className="text-sm text-slate-500 mt-2 line-clamp-2">{desc}</p>
-          )}
+    <Link
+      to={`/products/${variant.slug}`}
+      className="group flex flex-col justify-between rounded-xl border border-slate-200 p-5 hover:border-maroon hover:shadow-md transition-all bg-white"
+    >
+      {variant.image_path ? (
+        <img
+          src={variant.image_path}
+          alt={variant.name}
+          className="w-full h-28 object-cover rounded-lg"
+        />
+      ) : (
+        <div className="h-28 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 rounded-lg text-slate-400">
+          <span className="text-4xl">📦</span>
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="font-bold text-slate-900">
-            {price ? formatCurrency(Number(price)) : 'On request'}
-          </span>
-          {Number(stock) > 0 ? (
-              <Badge className="bg-maroon/10 text-maroon-dark text-xs">
-              In stock
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="text-xs">
-              Out of stock
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      )}
+      <div className="mt-4">
+        <p className="text-xs text-slate-500 font-semibold">SKU: {variant.sku}</p>
+        <h3 className="font-semibold text-slate-900 group-hover:text-maroon mt-1 line-clamp-2">
+          {variant.name}
+        </h3>
+        {variant.description && (
+          <p className="text-sm text-slate-500 mt-2 line-clamp-2">{variant.description}</p>
+        )}
+      </div>
+      <div className="mt-3 flex items-center justify-between text-xs">
+        <span className="text-maroon font-bold">Open product →</span>
+        <ChevronRight size={16} className="text-slate-300 group-hover:text-maroon" />
+      </div>
+    </Link>
   );
 }

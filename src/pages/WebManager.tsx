@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoriesTab } from '@/components/web-manager/CategoriesTab';
 import { VariantsTab } from '@/components/web-manager/VariantsTab';
+import { HeroSlidesTab } from '@/components/web-manager/HeroSlidesTab';
 
 const WebManager = () => {
   const [activeTab, setActiveTab] = useState('categories');
@@ -13,19 +14,22 @@ const WebManager = () => {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Web Manager</h1>
           <p className="text-muted-foreground">
-            Manage product categories and variants for your public website
+            Manage product categories, variants, and the rotating homepage hero slider
           </p>
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="categories">
             Categories
           </TabsTrigger>
           <TabsTrigger value="variants">
             Variants
+          </TabsTrigger>
+          <TabsTrigger value="hero-slides">
+            Hero Slides
           </TabsTrigger>
         </TabsList>
 
@@ -35,6 +39,10 @@ const WebManager = () => {
 
         <TabsContent value="variants" className="mt-6">
           <VariantsTab />
+        </TabsContent>
+
+        <TabsContent value="hero-slides" className="mt-6">
+          <HeroSlidesTab />
         </TabsContent>
       </Tabs>
 

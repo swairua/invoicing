@@ -1673,7 +1673,7 @@ try {
 
         // Check authorization for modifications to protected tables
         // web_* tables: website content (categories/variants/images) - admin only
-        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images'];
+        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images', 'hero_slides'];
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
         }
@@ -1999,7 +1999,7 @@ try {
 
         // Check authorization for modifications to protected tables
         // web_* tables: website content - admin only
-        $protected_tables = ['users', 'profiles', 'user_permissions', 'roles', 'companies', 'web_categories', 'web_variants', 'variant_images'];
+        $protected_tables = ['users', 'profiles', 'user_permissions', 'roles', 'companies', 'web_categories', 'web_variants', 'variant_images', 'hero_slides'];
         $auth = null;
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
@@ -2246,7 +2246,7 @@ try {
 
         // Check authorization for modifications to protected tables
         // web_* tables: website content - admin only
-        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images'];
+        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images', 'hero_slides'];
         $auth = null;
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
@@ -2318,7 +2318,7 @@ try {
         }
 
         // Check authorization for modifications to protected tables
-        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images'];
+        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images', 'hero_slides'];
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
         }
@@ -3217,6 +3217,8 @@ try {
             'web_categories' => ['id', 'name', 'slug', 'icon', 'description', 'image_path', 'display_order', 'is_active', 'created_at', 'updated_at'],
             'web_variants' => ['id', 'category_id', 'name', 'sku', 'slug', 'description', 'image_path', 'display_order', 'is_active', 'created_at', 'updated_at'],
             'variant_images' => ['id', 'variant_id', 'image_url', 'alt_text', 'display_order', 'created_at'],
+            // Rotating homepage hero slides (public_read + admin CRUD)
+            'hero_slides' => ['id', 'image_url', 'title', 'subtitle', 'display_order', 'is_active', 'created_at', 'updated_at'],
         ];
         if (!isset($public_tables[$table])) {
             http_response_code(403);
