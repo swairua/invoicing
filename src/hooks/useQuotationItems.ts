@@ -1110,6 +1110,7 @@ export const useCreateDirectReceipt = () => {
       let cleanPayment = {
         company_id: companyId,
         invoice_id: invoiceData.id,
+        customer_id: customerId,
         payment_date: paymentDate,
         payment_method: payment.payment_method || 'cash',
         amount: paymentAmount,
@@ -1325,6 +1326,7 @@ export const useCreateDirectReceiptWithItems = () => {
       let cleanPayment = {
         company_id: companyId,
         invoice_id: invoiceData.id,
+        customer_id: customerId,
         payment_date: paymentDate,
         payment_method: payment.payment_method || 'cash',
         amount: paymentAmount,

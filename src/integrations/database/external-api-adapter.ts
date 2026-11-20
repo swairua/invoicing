@@ -643,6 +643,16 @@ export class ExternalAPIAdapter implements IDatabase {
       }
 
       console.log(`${logPrefix} - Success (${response.status})`);
+      // Some backends report failures with HTTP 200 but a body of
+      // { status: 'error', message: '...' }. Treat those as real errors so
+      // callers don't mistake a failed write for success.
+      if (result && typeof result === 'object' && (result.status === 'error' || typeof result.error === 'string')) {
+        const msg = typeof result.message === 'string' && result.message
+          ? result.message
+          : (typeof result.error === 'string' ? result.error : 'Request failed');
+        console.warn(`${logPrefix} - Server reported failure despite HTTP ${response.status}: ${msg}`);
+        return { data: null as any, error: new Error(msg), status: response.status };
+      }
       return { data: result.data || result, error: null, status: response.status };
     } catch (error) {
       return {

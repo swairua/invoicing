@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/integrations/api';
 import { toast } from 'sonner';
+import { getClientApiUrl } from '@/utils/getApiUrl';
 
 /**
  * Fixed hook for fetching invoices with customer data
@@ -233,7 +234,12 @@ export const useDeleteInvoice = () => {
         // - payments
         // - invoice itself
         // All in a single database transaction
-        const response = await fetch(`${process.env.VITE_BACKEND_URL || 'http://localhost:3000'}/api.php?action=delete_invoice_with_cascade`, {
+        // NOTE: process.env.VITE_BACKEND_URL is NOT inlined by Vite (it only
+        // inlines import.meta.env.VITE_*), so the old fallback pointed at
+        // http://localhost:3000, which serves nothing — the request never
+        // reached the API and the delete always failed. Use the same API
+        // base URL helper as the rest of the app.
+        const response = await fetch(`${getClientApiUrl()}?action=delete_invoice_with_cascade`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -257,6 +263,10 @@ export const useDeleteInvoice = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices_fixed'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      // Cascade delete removes payments too — notify imperative useSelect consumers
+      window.dispatchEvent(new CustomEvent('database:refresh', { detail: { table: 'invoices' } }));
+      window.dispatchEvent(new CustomEvent('database:refresh', { detail: { table: 'payments' } }));
       toast.success('Invoice deleted successfully!');
     },
     onError: (error) => {

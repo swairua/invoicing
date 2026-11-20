@@ -80,6 +80,8 @@ export function ViewRemittanceModal({
         email: currentCompany.email,
         tax_number: currentCompany.tax_number,
         logo_url: currentCompany.logo_url,
+        pdf_background_image: currentCompany.pdf_background_image,
+        pdf_background_opacity: currentCompany.pdf_background_opacity,
         primary_color: currentCompany.primary_color,
         pdf_template: currentCompany.pdf_template,
         currency: currentCompany.currency

@@ -166,6 +166,7 @@ export function RecordPaymentModal({ open, onOpenChange, onSuccess, invoice }: R
 
       const paymentRecord = {
         company_id: selectedInvoice?.company_id || currentCompany.id,
+        customer_id: selectedInvoice?.customer_id || null,
         invoice_id: paymentData.invoice_id,
         payment_number: paymentNumber,
         payment_date: paymentData.payment_date,
@@ -216,36 +217,45 @@ export function RecordPaymentModal({ open, onOpenChange, onSuccess, invoice }: R
         }
       }
 
-      // Check if payment was recorded but allocation might have failed
-      if (result.fallback_used) {
+      // Payment persisted but the invoice balance could NOT be updated on the
+      // server — don't present this as a plain success.
+      if (result?.invoice_update_failed) {
+        toast.warning(
+          `Payment of ${formatCurrency(paymentData.amount)} was saved, but the invoice balance could NOT be updated on the server.`,
+          {
+            description: result.invoice_update_error
+              ? `Server error: ${result.invoice_update_error}. Please refresh and, if the invoice is still wrong, contact an administrator.`
+              : 'Please refresh and, if the invoice is still wrong, contact an administrator.',
+            duration: 8000,
+          }
+        );
+        setAllocationFailed(false);
+      } else if (result.fallback_used) {
         if (result.allocation_failed) {
           setAllocationFailed(true);
           if (creditNoteNumber) {
+            // onSuccess already surfaced allocation_failed via a warning toast; add credit-note context only
             toast.success(`Payment of ${formatCurrency(paymentData.amount)} recorded successfully!`, {
-              description: `Credit note ${creditNoteNumber} created for overpayment. However, payment allocation failed. See the fix options below.`
-            });
-          } else {
-            toast.success(`Payment of ${formatCurrency(paymentData.amount)} recorded successfully!`, {
-              description: "However, payment allocation failed. See the fix options below."
+              description: `Credit note ${creditNoteNumber} created for overpayment. Payment allocation failed — see the fix options below.`
             });
           }
+          // else: onSuccess already shows the allocation-failed warning
         } else {
           if (creditNoteNumber) {
+            // onSuccess already surfaced allocation_failed via a warning toast; add credit-note context only
             toast.success(`Payment of ${formatCurrency(paymentData.amount)} recorded successfully!`, {
               description: `Credit note ${creditNoteNumber} created for overpayment.`
             });
-          } else {
-            toast.success(`Payment of ${formatCurrency(paymentData.amount)} recorded successfully!`);
           }
+          // else: onSuccess already shows the success toast
         }
       } else {
         if (creditNoteNumber) {
           toast.success(`Payment of ${formatCurrency(paymentData.amount)} recorded successfully!`, {
             description: `Credit note ${creditNoteNumber} created for overpayment.`
           });
-        } else {
-          toast.success(`Payment of ${formatCurrency(paymentData.amount)} recorded successfully!`);
         }
+        // else: onSuccess already shows the success toast
         setAllocationFailed(false);
       }
       onSuccess();

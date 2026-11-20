@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { parseErrorMessage } from '@/utils/errorHelpers';
 import { RecordPaymentModal } from '@/components/payments/RecordPaymentModal';
@@ -113,6 +113,27 @@ export default function Payments() {
     }
   }, [permissionsLoading, canViewPayment]);
 
+  // Enrich each payment with its linked invoice (and customer) — the raw
+  // payments table stores no customer or invoice-number columns, so the
+  // link lives entirely on the invoice side.
+  const enrichedPayments = useMemo(() => {
+    return (payments || []).map((payment: any) => {
+      const invoice = invoices.find((inv: any) => inv.id === payment.invoice_id);
+      return {
+        ...payment,
+        customers: invoice?.customers,
+        payment_allocations: invoice ? [{
+          id: `${payment.id}-${invoice.id}`,
+          invoice_id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          allocated_amount: payment.amount,
+          invoice_total: invoice.total_amount,
+          invoice_date: invoice.invoice_date,
+        }] : [],
+      };
+    });
+  }, [payments, invoices]);
+
   const handleRecordPayment = () => {
     if (!canCreatePayment('create_payment')) {
       toast.error('You do not have permission to record payments');
@@ -180,6 +201,8 @@ export default function Payments() {
         email: currentCompany.email,
         tax_number: currentCompany.tax_number,
         logo_url: currentCompany.logo_url,
+        pdf_background_image: currentCompany.pdf_background_image,
+        pdf_background_opacity: currentCompany.pdf_background_opacity,
         primary_color: currentCompany.primary_color,
         pdf_template: currentCompany.pdf_template,
         pdf_footer_line1: currentCompany.pdf_footer_line1,
@@ -197,7 +220,7 @@ export default function Payments() {
 
   // Removed inline PDF generation function - now using utility function
 
-  const filteredPayments = payments.filter(payment =>
+  const filteredPayments = enrichedPayments.filter(payment =>
     (payment.customers?.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (payment.payment_number?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     payment.payment_allocations?.some(alloc => (alloc.invoice_number?.toLowerCase() || '').includes(searchTerm.toLowerCase()))

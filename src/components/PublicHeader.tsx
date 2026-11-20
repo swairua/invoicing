@@ -30,56 +30,58 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
     'Syringes and Needles': <Syringe size={24} className="text-lime-600" />,
   };
 
+  const fullProductSubmenu = [
+    'Bandages, Tapes and Dressings',
+    'Bottles and Containers',
+    'Catheters and Tubes',
+    'Cotton Wool',
+    'Diapers and Sanitary',
+    'Gloves',
+    'Hospital Equipments',
+    'Hospital Furniture',
+    'Hospital Instruments',
+    'Hospital Linen',
+    'Infection Control',
+    'Others',
+    'PPE',
+    'Spirits, Detergents and Disinfectants',
+    'Syringes and Needles',
+  ];
+
   const navigationItems = [
     { label: 'Home', href: '/' },
-    { label: 'About Us', href: '#about' },
+    { label: 'About Us', href: '/about-us' },
     {
       label: 'Our Products',
-      href: '#',
-      submenu: [
-        'Bandages, Tapes and Dressings',
-        'Bottles and Containers',
-        'Catheters and Tubes',
-        'Cotton Wool',
-        'Diapers and Sanitary',
-        'Gloves',
-        'Hospital Equipments',
-        'Hospital Furniture',
-        'Hospital Instruments',
-        'Hospital Linen',
-        'Infection Control',
-        'Others',
-        'PPE',
-        'Spirits, Detergents and Disinfectants',
-        'Syringes and Needles',
-      ],
+      href: '/products',
+      submenu: currentPage === 'about' ? undefined : fullProductSubmenu,
     },
-    { label: 'Talk to us', href: '#talk-to-us' },
+    { label: 'Talk to us', href: '/contact' },
   ];
 
   const isCurrentPage = (page: string) => currentPage === page;
 
   return (
-    <header className="sticky top-0 bg-white shadow-md z-50 border-b border-transparent bg-gradient-to-r from-white via-white to-neutral-100/30">
+    <header className="sticky top-0 z-50 border-b border-white/30 bg-white/60 backdrop-blur-md bg-gradient-to-b from-white/70 via-white/50 to-transparent shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-20 gap-8">
+        <div className="flex items-center h-16 sm:h-20 gap-8 relative z-20">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0">
+          <Link to="/" className="flex-shrink-0 group">
             <BiolegendLogo size="lg" showText={true} />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8 ml-auto">
+          <nav className="hidden md:flex items-center space-x-6 ml-auto">
             {navigationItems.map((item) => {
               if (item.label === 'Talk to us') {
                 return (
                   <Link
                     key={item.label}
                     to="/contact"
-                    className={`transition-colors font-medium ${
+                    className={`transition-all duration-300 font-semibold px-5 py-2.5 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 ${
                       isCurrentPage('contact')
-                        ? 'text-primary'
-                        : 'text-gray-700 hover:text-primary'
+                        ? 'bg-primary text-white shadow-[0_0_20px_rgba(139,92,246,0.35)]'
+                        : 'text-gray-700 hover:text-primary hover:bg-gray-50 hover:shadow-md'
                     }`}
                   >
                     {item.label}
@@ -91,10 +93,10 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
                   <Link
                     key={item.label}
                     to="/about-us"
-                    className={`transition-colors font-medium ${
+                    className={`transition-all duration-300 font-semibold px-5 py-2.5 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 ${
                       isCurrentPage('about')
-                        ? 'text-primary'
-                        : 'text-gray-700 hover:text-primary'
+                        ? 'bg-primary text-white shadow-[0_0_20px_rgba(139,92,246,0.35)]'
+                        : 'text-gray-700 hover:text-primary hover:bg-gray-50 hover:shadow-md'
                     }`}
                   >
                     {item.label}
@@ -106,10 +108,10 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
                   <Link
                     key={item.label}
                     to="/"
-                    className={`transition-colors font-medium ${
+                    className={`transition-all duration-300 font-semibold px-5 py-2.5 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 ${
                       isCurrentPage('home')
-                        ? 'text-primary'
-                        : 'text-gray-700 hover:text-primary'
+                        ? 'bg-primary text-white shadow-[0_0_20px_rgba(139,92,246,0.35)]'
+                        : 'text-gray-700 hover:text-primary hover:bg-gray-50 hover:shadow-md'
                     }`}
                   >
                     {item.label}
@@ -120,18 +122,14 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
                 <div key={item.label} className="relative group">
                   <a
                     href={item.href}
-                    className={`transition-colors flex items-center gap-1 font-medium ${
-                      isCurrentPage('products')
-                        ? 'text-primary'
-                        : 'text-gray-700 hover:text-primary'
-                    }`}
+                    className={`transition-all duration-300 flex items-center gap-1.5 font-semibold px-5 py-2.5 rounded-xl bg-white/70 backdrop-blur-sm border border-white/50 text-gray-700 hover:text-primary hover:bg-gray-50 hover:shadow-md`}
                   >
                     {item.label}
-                    {item.submenu && <ChevronDown size={16} className="group-hover:rotate-180 transition-transform duration-200" />}
+                    {item.submenu && <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" />}
                   </a>
                   {item.submenu && (
-                    <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-100 before:absolute before:bottom-full before:right-8 before:w-6 before:h-4 before:bg-white before:border-t-2 before:border-l-2 before:border-gray-100 before:rotate-45" style={{ minWidth: '750px' }}>
-                      <div className="grid grid-cols-5 gap-x-8 gap-y-4 p-6">
+                    <div className="absolute right-0 mt-2 w-[720px] rounded-2xl bg-white/95 backdrop-blur-xl border border-white/60 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 before:absolute before:-top-1 before:left-1/2 before:-translate-x-1/2 before:w-8 before:h-8 before:bg-white/95 before:border-t-2 before:border-l-2 before:border-white/60 before:rotate-45">
+                      <div className="grid grid-cols-5 gap-x-6 gap-y-6 p-8">
                         {item.submenu.map((sub) => {
                           const product = getProductBySlug(sub.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
                           const productSlug = product?.slug || sub.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -139,12 +137,12 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
                             <Link
                               key={sub}
                               to={`/products/${productSlug}`}
-                              className="flex flex-col items-center text-center group/item transition-all duration-200 hover:scale-110"
+                              className="flex flex-col items-center text-center group/item transition-all duration-300 hover:scale-105"
                             >
-                              <div className="mb-2 transition-transform group-hover/item:scale-125">
+                              <div className="w-10 h-10 mb-2.5 rounded-xl bg-gray-50 flex items-center justify-center transition-all duration-300 group-hover/item:scale-110 group-hover/item:bg-primary/10">
                                 {productIconMap[sub]}
                               </div>
-                              <span className="text-xs text-gray-700 group-hover/item:text-primary group-hover/item:font-semibold transition-colors leading-tight">
+                              <span className="text-xs font-medium text-gray-600 group-hover/item:text-primary group-hover/item:font-bold transition-colors leading-tight whitespace-nowrap">
                                 {sub}
                               </span>
                             </Link>
@@ -160,57 +158,69 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden ml-auto"
+            className="md:hidden ml-auto w-10 h-10 rounded-xl bg-white/80 backdrop-blur-sm border border-white/60 flex items-center justify-center hover:bg-gray-100 transition-all duration-200"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X className="w-6 h-6 text-gray-700" /> : <Menu className="w-6 h-6 text-gray-700" />}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="md:hidden pb-4 space-y-2">
-            {navigationItems.map((item) => (
-              <div key={item.label}>
-                {item.label === 'Talk to us' ? (
-                  <Link
-                    to="/contact"
-                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-primary/10 rounded font-medium"
-                  >
-                    {item.label}
-                  </Link>
-                ) : item.label === 'About Us' ? (
-                  <Link
-                    to="/about-us"
-                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-primary/10 rounded font-medium"
-                  >
-                    {item.label}
-                  </Link>
-                ) : item.label === 'Home' ? (
-                  <Link
-                    to="/"
-                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-primary/10 rounded font-medium"
-                  >
-                    {item.label}
-                  </Link>
-                ) : (
+          <div className="md:hidden rounded-2xl bg-white/95 backdrop-blur-xl border border-white/60 shadow-2xl mt-2">
+            <div className="p-4 space-y-2">
+              {navigationItems.map((item) => {
+                if (item.label === 'Talk to us') {
+                  return (
+                    <Link
+                      key={item.label}
+                      to="/contact"
+                      className="w-full text-left px-5 py-3 text-gray-700 hover:bg-primary/50 hover:text-primary rounded-xl font-medium transition-all duration-200"
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                if (item.label === 'About Us') {
+                  return (
+                    <Link
+                      key={item.label}
+                      to="/about-us"
+                      className="w-full text-left px-5 py-3 text-gray-700 hover:bg-primary/50 hover:text-primary rounded-xl font-medium transition-all duration-200"
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                if (item.label === 'Home') {
+                  return (
+                    <Link
+                      key={item.label}
+                      to="/"
+                      className="w-full text-left px-5 py-3 text-gray-700 hover:bg-primary/50 hover:text-primary rounded-xl font-medium transition-all duration-200"
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                }
+                return item.submenu ? (
                   <>
                     <button
-                      onClick={() =>
-                        item.submenu && setProductsDropdownOpen(!productsDropdownOpen)
-                      }
-                      className="w-full text-left px-4 py-2 text-gray-700 hover:bg-primary/10 rounded flex justify-between items-center font-medium"
+                      key={item.label}
+                      onClick={() => item.submenu && setProductsDropdownOpen(!productsDropdownOpen)}
+                      className="w-full text-left px-5 py-3 text-gray-700 hover:bg-primary/50 hover:text-primary rounded-xl font-medium flex justify-between items-center transition-all duration-200"
                     >
                       {item.label}
                       {item.submenu && (
                         <ChevronDown
-                          size={16}
-                          className={`transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`}
+                          size={14}
+                          className={`transition-transform ${productsDropdownOpen ? 'rotate-180' : ''} text-gray-500`}
                         />
                       )}
                     </button>
                     {item.submenu && productsDropdownOpen && (
-                      <div className="bg-gray-50 space-y-1 px-4 py-2">
+                      <div className="bg-gray-50/50 rounded-xl p-3 space-y-1.5">
                         {item.submenu.map((sub) => {
                           const product = getProductBySlug(sub.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
                           const productSlug = product?.slug || sub.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -219,7 +229,7 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
                               key={sub}
                               to={`/products/${productSlug}`}
                               onClick={() => setMobileMenuOpen(false)}
-                              className="block text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary/10 rounded"
+                              className="block text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-white hover:text-primary rounded-lg transition-colors duration-200"
                             >
                               {sub}
                             </Link>
@@ -228,10 +238,18 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
                       </div>
                     )}
                   </>
-                )}
-              </div>
-            ))}
-          </nav>
+                ) : (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    className="w-full text-left px-5 py-3 text-gray-700 hover:bg-primary/50 hover:text-primary rounded-xl font-medium transition-all duration-200"
+                  >
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
         )}
       </div>
     </header>

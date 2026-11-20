@@ -37,21 +37,37 @@ export const useOptimizedProductSearch = (companyId?: string, enabled: boolean =
       if (!companyId) return [];
 
       try {
-        // First get products without embedded relationships
-        let filterObj: any = {
-          company_id: companyId
-        };
+        // The backend has no "search" column; it supports _like-suffixed
+        // filters (case-insensitive substring on a single column) combined
+        // with AND. To search by name OR sku we run both queries and merge.
+        const term = debouncedSearchTerm.trim();
+        let products: any[] = [];
+        if (term) {
+          const baseFilter = { company_id: companyId };
+          const [byName, bySku] = await Promise.all([
+            apiClient.select('products', { ...baseFilter, name_like: term }),
+            apiClient.select('products', { ...baseFilter, sku_like: term }),
+          ]);
 
-        // Add search filter if search term exists
-        if (debouncedSearchTerm.trim()) {
-          filterObj.search = debouncedSearchTerm.trim();
-        }
+          if (byName.error && bySku.error) {
+            throw new Error(`Failed to search products: ${byName.error.message || bySku.error.message}`);
+          }
+          if (byName.error) {
+            console.warn('Product search by name failed, using SKU results only:', byName.error.message);
+          } else if (bySku.error) {
+            console.warn('Product search by SKU failed, using name results only:', bySku.error.message);
+          }
 
-        const { data: products, error: productsError } = await apiClient.select('products', filterObj);
-
-        if (productsError) {
-          console.error('Error searching products:', productsError);
-          throw new Error(`Failed to search products: ${productsError.message}`);
+          const byId = new Map<string, any>();
+          for (const p of (byName.data || [])) byId.set(String(p.id), p);
+          for (const p of (bySku.data || [])) byId.set(String(p.id), p);
+          products = Array.from(byId.values());
+        } else {
+          const { data, error } = await apiClient.select('products', { company_id: companyId });
+          if (error) {
+            throw new Error(`Failed to search products: ${error.message}`);
+          }
+          products = data || [];
         }
 
         // Get categories separately to avoid relationship issues
@@ -74,7 +90,7 @@ export const useOptimizedProductSearch = (companyId?: string, enabled: boolean =
         const transformedData: ProductSearchResult[] = (products || []).map((product: any) => ({
           id: product.id,
           name: product.name,
-          product_code: product.product_code,
+          product_code: product.product_code ?? product.sku ?? '',
           unit_of_measure: product.unit_of_measure || 'pieces',
           unit_price: Number(product.selling_price || product.unit_price || 0),
           // Ensure both price fields are available for compatibility
@@ -161,7 +177,7 @@ export const usePopularProducts = (companyId?: string, limit: number = 20) => {
         const transformedData: ProductSearchResult[] = sortedProducts.map((product: any) => ({
           id: product.id,
           name: product.name,
-          product_code: product.product_code,
+          product_code: product.product_code ?? product.sku ?? '',
           unit_of_measure: product.unit_of_measure || 'pieces',
           unit_price: Number(product.selling_price || product.unit_price || 0),
           // Ensure both price fields are available for compatibility

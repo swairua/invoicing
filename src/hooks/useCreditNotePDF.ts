@@ -19,6 +19,8 @@ export function useCreditNotePDFDownload() {
         logo_url: currentCompany?.logo_url || '',
         primary_color: currentCompany?.primary_color || undefined,
         currency: currentCompany?.currency || undefined,
+        pdf_background_image: currentCompany?.pdf_background_image || undefined,
+        pdf_background_opacity: currentCompany?.pdf_background_opacity ?? undefined,
       };
 
       // Generate and download PDF

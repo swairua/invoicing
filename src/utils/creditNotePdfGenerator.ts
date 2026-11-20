@@ -129,6 +129,8 @@ export const generateCreditNotePDF = (creditNote: CreditNotePDFData, company?: C
           line-height: 1.4;
           font-size: 12px;
           background: white;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         .page {
@@ -139,6 +141,8 @@ export const generateCreditNotePDF = (creditNote: CreditNotePDFData, company?: C
           box-shadow: 0 0 10px rgba(0,0,0,0.1);
           padding: 20mm;
           position: relative;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         .header {

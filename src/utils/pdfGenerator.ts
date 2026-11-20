@@ -194,12 +194,17 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
                        data.type === 'remittance' ? 'Remittance Advice' :
                        data.type === 'lpo' ? 'Purchase Order' :
                        data.type.charAt(0).toUpperCase() + data.type.slice(1);
+    const customerName = data.customer?.name || '';
+    const firstName = customerName.trim().split(/\s+/)[0] || '';
+    const namePart = firstName ? `-${firstName}` : '';
+    const docNumber = data.number.replace(/\//g, '-');
+    const datePart = new Date().toISOString().split('T')[0];
   
   const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${documentTitle} ${data.number}</title>
+      <title>${documentTitle}-${docNumber}${namePart}-${datePart}</title>
       <meta charset="UTF-8">
       <style>
         ${backgroundCSS}
@@ -220,8 +225,10 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
           line-height: 1.4;
           font-size: 12px;
           background: white;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
-        
+
         .page {
           width: 210mm;
           min-height: 100vh;
@@ -232,6 +239,8 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
           position: relative;
           display: flex;
           flex-direction: column;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         
         /* Template-specific header styles */
@@ -855,7 +864,7 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
     </html>
   `;
 
-  // Generate filename based on document type and number
+  // Generate filename based on document type, number and customer first name
   const generateFilename = () => {
     const date = new Date().toISOString().split('T')[0];
     const docNumber = data.number.replace(/\//g, '-');
@@ -866,7 +875,11 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
                       data.type === 'remittance' ? 'REMITTANCE' :
                       data.type === 'lpo' ? 'LPO' :
                       data.type.toUpperCase();
-    return `${typeLabel}_${docNumber}_${date}.pdf`;
+    // Extract customer first name for filename
+    const customerName = data.customer?.name || '';
+    const firstName = customerName.trim().split(/\s+/)[0] || '';
+    const namePart = firstName ? `-${firstName}` : '';
+    return `${typeLabel}-${docNumber}${namePart}-${date}.pdf`;
   };
 
   if (downloadAsFile) {
@@ -887,7 +900,21 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
           await preloadPdfBackground(background.url);
           setTimeout(() => {
             iframe.focus();
+            // Set document title so browser uses filename in Save As dialog
+            // Browsers read the main document title for print dialog filename
+            const prevTitle = document.title;
+            document.title = generateFilename();
+            try {
+              const win = iframe.contentWindow;
+              if (win?.document) {
+                win.document.title = generateFilename();
+              }
+            } catch {}
             iframe.contentWindow?.print();
+            // Restore original title after a short delay
+            setTimeout(() => {
+              document.title = prevTitle;
+            }, 1000);
 
             // Clean up after a delay
             setTimeout(() => {
@@ -910,12 +937,20 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
       printWindow.document.write(htmlContent);
       printWindow.document.close();
 
+      // Set document title so browser uses filename in Save As dialog
+      const prevTitle = document.title;
+      document.title = generateFilename();
+      try { printWindow.document.title = generateFilename(); } catch {}
+
       // Wait for content (and the background image) to load before printing
       printWindow.onload = () => {
         void (async () => {
           await preloadPdfBackground(background.url);
           setTimeout(() => {
             printWindow.print();
+            setTimeout(() => {
+              document.title = prevTitle;
+            }, 1000);
           }, 500);
         })();
       };
@@ -924,6 +959,7 @@ export const generatePDF = (data: DocumentData, downloadAsFile: boolean = true) 
       setTimeout(() => {
         if (printWindow && !printWindow.closed) {
           printWindow.print();
+          document.title = prevTitle;
         }
       }, 1000);
 

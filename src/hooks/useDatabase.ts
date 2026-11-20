@@ -1073,15 +1073,21 @@ export function useCreatePayment() {
             throw new Error('Payment record was created but no ID was returned. Please try again.');
           }
 
-          // Fetch the created payment record
+          // Fetch the created payment record to verify it actually persisted
           const { data: paymentData, error: fetchError } = await db.selectOne('payments', insertResult.id);
 
-          if (fetchError) {
-            throw fetchError;
+          if (fetchError || !paymentData) {
+            throw new Error(
+              fetchError?.message
+                ? `Payment could not be verified on the server (${fetchError.message}). It was NOT recorded. Please try again.`
+                : 'Payment could not be verified on the server. It was NOT recorded. Please try again.'
+            );
           }
 
           // Try to create payment allocation
           let allocation_failed = false;
+          let invoice_update_failed = false;
+          let invoice_update_error: string | null = null;
           try {
             // Check if payment_allocations table exists
             const { error: allocError } = await db.insert('payment_allocations', {
@@ -1154,11 +1160,15 @@ export function useCreatePayment() {
                     });
 
                     // Update invoice
+                    const toMySqlDateTime = (d: Date) => {
+                      const pad = (n: number) => String(n).padStart(2, '0');
+                      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                    };
                     const updateResult = await db.update('invoices', paymentRecord.invoice_id, {
                       paid_amount: Math.max(0, totalPaid),
                       balance_due: Math.max(0, newBalanceDue),
                       status: newStatus,
-                      updated_at: new Date().toISOString()
+                      updated_at: toMySqlDateTime(new Date())
                     });
 
                     console.log('[Payment] Invoice update result:', {
@@ -1167,7 +1177,9 @@ export function useCreatePayment() {
                     });
 
                     if (updateResult?.error) {
-                      console.warn('Failed to update invoice:', updateResult.error?.message);
+                      console.error('Failed to update invoice:', updateResult.error?.message);
+                      invoice_update_failed = true;
+                      invoice_update_error = updateResult.error?.message || 'Unknown error';
                     }
                   } else {
                     console.warn('[Payment] Invoice not found or error fetching:', invoiceError?.message);
@@ -1188,6 +1200,8 @@ export function useCreatePayment() {
             success: true,
             fallback_used: true,
             allocation_failed,
+            invoice_update_failed,
+            invoice_update_error,
             data: paymentData
           };
         } catch (fallbackError: any) {
@@ -1201,8 +1215,25 @@ export function useCreatePayment() {
       queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['paymentAllocations'] });
+      // Force a refetch to ensure UI updates immediately after payment recording
+      queryClient.refetchQueries({ queryKey: ['payments', 'invoices'] });
 
-      toast.success('Payment recorded successfully!');
+      // Notify imperative useSelect consumers (they re-fetch on this event)
+      window.dispatchEvent(new CustomEvent('database:refresh', { detail: { table: 'payments' } }));
+      window.dispatchEvent(new CustomEvent('database:refresh', { detail: { table: 'invoices' } }));
+      window.dispatchEvent(new CustomEvent('database:refresh', { detail: { table: 'payment_allocations' } }));
+
+      if (result?.invoice_update_failed) {
+        toast.warning('Payment recorded, but the invoice balance could NOT be updated', {
+          description: `The payment is saved, but the invoice still shows the old balance. Error: ${result.invoice_update_error ?? 'unknown'}. Please refresh or contact an administrator.`
+        });
+      } else if (result?.allocation_failed) {
+        toast.warning('Payment recorded, but the allocation to the invoice could NOT be created', {
+          description: 'The payment is saved, but the invoice balance was not changed. See the fix options below.'
+        });
+      } else {
+        toast.success('Payment recorded successfully!');
+      }
     },
     onError: (error: any) => {
       console.error('Error creating payment:', error);
