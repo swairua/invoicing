@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 export default function PublicCategories() {
   const company = useCompanyConfig();
-  const brand = company.name || 'Diagnostic Solutions';
+  const brand = company.name || 'Diag Solutions Ltd';
   const { categories, loading } = useWebCategories();
 
   useSEO(

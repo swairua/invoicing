@@ -20,7 +20,7 @@ interface CompanyConfigContextType {
 
 const defaultConfig: CompanyConfig = {
   id: 'default',
-  name: 'Haemonetics East Africa Limited',
+  name: 'Diag Solutions Ltd',
   email: 'sales@heal.co.ke',
   phone: '+254 207 863 782',
   address: 'Naivasha Road, Kamrose Plaza, 1st Flr, Rm 14',
