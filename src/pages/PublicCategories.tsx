@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { MapPin, ArrowRight } from 'lucide-react';
 import { useWebCategories, WebCategoryForPublic } from '@/hooks/useWebCategories';
+import { useHeroSlides } from '@/hooks/useHeroSlides';
+import { HeroSlider } from '@/components/HeroSlider';
 import { useCompanyConfig } from '@/hooks/useCompanyConfig';
 import { useSEO } from '@/hooks/useSEO';
 import { generateOrganizationSchema } from '@/utils/seoHelpers';
@@ -21,6 +23,7 @@ export default function PublicCategories() {
   const company = useCompanyConfig();
   const brand = company.name || 'Diag Solutions Ltd';
   const { categories, loading } = useWebCategories();
+  const { slides, loading: slidesLoading } = useHeroSlides();
 
   useSEO(
     {
@@ -38,20 +41,12 @@ export default function PublicCategories() {
     <div className="min-h-screen bg-white text-slate-800 font-sans">
       <PublicHeader />
 
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-slate-50 via-neutral-100 to-neutral-50 py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight">
-            <span className="text-maroon">{brand}</span>{' '}
-            <span className="text-slate-500">|</span>{' '}
-            Laboratory & Imaging
-          </h1>
-          <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-            {company.description ||
-              'Trusted diagnostic equipment across East Africa. Choose a department below to explore its complete range.'}
-          </p>
-        </div>
-      </section>
+      {/* Hero: rotating slider once slides load, static hero otherwise */}
+      {slidesLoading || slides.length === 0 ? (
+        <StaticHero brand={brand} company={company} />
+      ) : (
+        <HeroSlider slides={slides} />
+      )}
 
       {/* Category cards */}
       <section className="py-16">
@@ -81,6 +76,30 @@ export default function PublicCategories() {
 
       <PublicFooter />
     </div>
+  );
+}
+
+function StaticHero({
+  brand,
+  company,
+}: {
+  brand: string;
+  company: ReturnType<typeof useCompanyConfig>;
+}) {
+  return (
+    <section className="bg-gradient-to-br from-slate-50 via-neutral-100 to-neutral-50 py-16 sm:py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight">
+          <span className="text-maroon">{brand}</span>{' '}
+          <span className="text-slate-500">|</span>{' '}
+          Laboratory & Imaging
+        </h1>
+        <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
+          {company.description ||
+            'Trusted diagnostic equipment across East Africa. Choose a department below to explore its complete range.'}
+        </p>
+      </div>
+    </section>
   );
 }
 

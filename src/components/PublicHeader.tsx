@@ -65,7 +65,7 @@ export function PublicHeader({ currentPage }: PublicHeaderProps) {
         <div className="flex items-center h-20 gap-8">
           {/* Logo */}
           <Link to="/" className="flex-shrink-0">
-            <BiolegendLogo size="md" showText={true} />
+            <BiolegendLogo size="lg" showText={true} />
           </Link>
 
           {/* Desktop Navigation */}
