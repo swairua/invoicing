@@ -104,6 +104,10 @@ export const HeroSlidesTab = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      if (!form.image_url && !file) {
+        toast.error('Choose an image before saving the slide.');
+        return;
+      }
       if (!form.image_url && file) {
         setUploading(true);
         const up = await uploadProductImage(file, 'hero-slide');
@@ -284,7 +288,7 @@ export const HeroSlidesTab = () => {
           </div>
 
           <div className="flex items-center gap-2 pt-2">
-            <Button onClick={handleSave} disabled={saving || uploading || !form.image_url}>
+            <Button onClick={handleSave} disabled={saving || uploading || (!form.image_url && !file)}>
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
               {editingId ? 'Update Slide' : 'Add Slide'}
             </Button>
@@ -292,6 +296,9 @@ export const HeroSlidesTab = () => {
               <Button type="button" variant="ghost" onClick={resetForm} disabled={saving}>
                 Cancel
               </Button>
+            )}
+            {!form.image_url && !file && !editingId && (
+              <span className="text-xs text-muted-foreground">Pick an image to add the first slide.</span>
             )}
           </div>
         </CardContent>
