@@ -176,6 +176,10 @@ export const sidebarPermissionMap: SidebarPermissionMap = {
     requiresAdminRole: true,
     description: 'Manage database and role definitions'
   },
+  'Web Manager': {
+    requiresAdminRole: true,
+    description: 'Manage public website categories, items and images'
+  },
 
   // Admin Section (requires admin role)
   'Admin': {

@@ -466,9 +466,185 @@ if ($action === "proxy_external_api") {
     }
 }
 
+// ---- Auth helpers moved above the main try block so early handlers (upload_file) can call them ----
+
+    // Helper function to create JWT token
+    function createJWT($user_id, $user_email, $user_role, $company_id = null, $status = 'active') {
+        global $JWT_SECRET;
+        $secret = $JWT_SECRET;
+        $header = base64_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
+        $payload = base64_encode(json_encode([
+            'sub' => $user_id,
+            'email' => $user_email,
+            'role' => $user_role,
+            'company_id' => $company_id,
+            'status' => $status,
+            'iat' => time(),
+            'exp' => time() + (24 * 60 * 60) // 24 hours
+        ]));
+        $signature = base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true));
+        return "$header.$payload.$signature";
+    }
+
+    // Helper function to verify JWT token
+    function verifyJWT($token) {
+        if (!$token) return null;
+        global $JWT_SECRET;
+        $secret = $JWT_SECRET;
+        $parts = explode('.', $token);
+        if (count($parts) !== 3) return null;
+
+        list($header, $payload, $signature) = $parts;
+
+        // Verify signature
+        $expected_signature = base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true));
+        if ($signature !== $expected_signature) return null;
+
+        // Decode payload
+        $decoded = json_decode(base64_decode($payload), true);
+        if (!$decoded) return null;
+
+        // Check expiration
+        if ($decoded['exp'] < time()) return null;
+
+        return $decoded;
+    }
+
+    // Helper function to check authorization for modifications (create, update, delete)
+    // Enforces strict JWT validation - no bypass mode
+    function requireAuthForModification($action, $table) {
+        global $conn;
+
+        // Get token from Authorization header
+        $auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
+        $token = null;
+
+        if ($auth_header && preg_match('/Bearer\s+(\S+)/', $auth_header, $matches)) {
+            $token = $matches[1];
+        }
+
+        // Fallback to POST data for compatibility
+        if (!$token) {
+            $token = $_POST['token'] ?? null;
+        }
+
+        // If no token provided, deny the operation
+        if (!$token) {
+            http_response_code(401);
+            error_log("🔴 [AUTH] $action on $table - No token provided (DENIED)");
+            error_log("📋 [DEBUG] Authorization header present: " . ($auth_header ? "yes" : "no"));
+            throw new Exception("Authentication required. Missing authorization token.");
+        }
+
+        // Try to verify token first (strict validation)
+        $decoded = verifyJWT($token);
+
+        // If strict verification failed, try to decode without signature verification
+        // This allows users with valid identity but expired/invalid JWT to proceed if they're admin
+        if (!$decoded) {
+            error_log("🟡 [AUTH] $action on $table - JWT verification failed, attempting lenient decode...");
+            $parts = explode('.', $token);
+            if (count($parts) === 3) {
+                try {
+                    // Decode payload without verifying signature
+                    $decoded = json_decode(base64_decode($parts[1]), true);
+                    if ($decoded) {
+                        error_log("🟡 [AUTH] Successfully extracted identity from invalid JWT (lenient mode)");
+                    }
+                } catch (Exception $e) {
+                    $decoded = null;
+                }
+            }
+        }
+
+        // Token validation failed - deny the operation
+        if (!$decoded) {
+            http_response_code(401);
+            error_log("🔴 [AUTH] $action on $table - Could not extract or verify token (DENIED)");
+            throw new Exception("Invalid or expired authentication token");
+        }
+
+        // Get user ID from decoded token
+        $user_id = $decoded['id'] ?? $decoded['sub'] ?? null;
+        if (!$user_id) {
+            http_response_code(401);
+            error_log("🔴 [AUTH] $action on $table - No user ID in token (DENIED)");
+            throw new Exception("Invalid token - no user ID");
+        }
+
+        // Get full user info from database to check status and company_id
+        $sql = "SELECT id, email, role, status, company_id FROM profiles WHERE id = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            http_response_code(500);
+            throw new Exception("Database error: " . $conn->error);
+        }
+
+        $stmt->bind_param("s", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $user = $result->fetch_assoc();
+        $stmt->close();
+
+        if (!$user) {
+            http_response_code(401);
+            error_log("🔴 [AUTH] $action on $table - User not found in profiles (DENIED) - user_id: $user_id");
+            throw new Exception("User not found");
+        }
+
+        // Check if user is active
+        if ($user['status'] !== 'active') {
+            http_response_code(403);
+            error_log("🔴 [AUTH] $action on $table - User is not active (status: {$user['status']}) - email: {$user['email']} (DENIED)");
+            throw new Exception("User account is not active. Status: " . $user['status']);
+        }
+
+        // Check if user is admin
+        $is_admin = stripos($user['role'], 'admin') !== false || $user['role'] === 'super_admin';
+        if (!$is_admin) {
+            http_response_code(403);
+            error_log("🔴 [AUTH] $action on $table - User is not admin (role: {$user['role']}) - email: {$user['email']} (DENIED)");
+            throw new Exception("Insufficient permissions. User role must be admin to perform $action.");
+        }
+
+        error_log("✅ [AUTH] $action on $table - Authorization passed for user {$user['email']} (role: {$user['role']}, status: {$user['status']})");
+        return $user;
+    }
+
+    /**
+     * Check if user can manage a specific company
+     * Used for company-specific authorization checks
+     */
+    function canManageCompany($user, $company_id) {
+        global $conn;
+
+        // Super admins can manage any company
+        if ($user['role'] === 'super_admin') {
+            error_log("✅ [AUTH] Super admin {$user['email']} can manage any company");
+            return true;
+        }
+
+        // Regular admins can only manage their own company
+        // Cast both to string to handle type differences from URL parameters vs database
+        $user_company_id = (string)$user['company_id'];
+        $target_company_id = (string)$company_id;
+
+        error_log("🔍 [AUTH] Checking company access: user_company={$user_company_id}, target_company={$target_company_id}, user_role={$user['role']}");
+
+        if ($user_company_id === $target_company_id) {
+            error_log("✅ [AUTH] User {$user['email']} can manage company {$company_id} (match)");
+            return true;
+        }
+
+        error_log("🔴 [AUTH] User {$user['email']} cannot manage company $company_id (user's company: {$user['company_id']}, role: {$user['role']})");
+        return false;
+    }
 try {
     // File upload endpoint - supports logo and branding uploads
     if ($action === "upload_file") {
+        // Admin-only: uploads write to public web folders (branding, website images)
+        requireAuthForModification($action, 'upload_file');
+
         if (!isset($_FILES['file'])) {
             http_response_code(400);
             throw new Exception("No file provided");
@@ -552,6 +728,9 @@ try {
 
     // Upload fallback logo endpoint
     if ($action === "upload_fallback_logo") {
+        // Admin-only: writes a global branding asset
+        requireAuthForModification($action, 'upload_fallback_logo');
+
         if (!isset($_FILES['file'])) {
             http_response_code(400);
             throw new Exception("No file provided");
@@ -633,6 +812,9 @@ try {
 
     // Delete fallback logo endpoint
     if ($action === "delete_fallback_logo") {
+        // Admin-only: removes a global branding asset
+        requireAuthForModification($action, 'delete_fallback_logo');
+
         error_log('🎯 Processing fallback logo deletion...');
 
         // Get public directory path
@@ -886,178 +1068,6 @@ try {
             'role' => $role
         ]);
         exit();
-    }
-
-    // Helper function to create JWT token
-    function createJWT($user_id, $user_email, $user_role, $company_id = null, $status = 'active') {
-        global $JWT_SECRET;
-        $secret = $JWT_SECRET;
-        $header = base64_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
-        $payload = base64_encode(json_encode([
-            'sub' => $user_id,
-            'email' => $user_email,
-            'role' => $user_role,
-            'company_id' => $company_id,
-            'status' => $status,
-            'iat' => time(),
-            'exp' => time() + (24 * 60 * 60) // 24 hours
-        ]));
-        $signature = base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true));
-        return "$header.$payload.$signature";
-    }
-
-    // Helper function to verify JWT token
-    function verifyJWT($token) {
-        if (!$token) return null;
-        global $JWT_SECRET;
-        $secret = $JWT_SECRET;
-        $parts = explode('.', $token);
-        if (count($parts) !== 3) return null;
-
-        list($header, $payload, $signature) = $parts;
-
-        // Verify signature
-        $expected_signature = base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true));
-        if ($signature !== $expected_signature) return null;
-
-        // Decode payload
-        $decoded = json_decode(base64_decode($payload), true);
-        if (!$decoded) return null;
-
-        // Check expiration
-        if ($decoded['exp'] < time()) return null;
-
-        return $decoded;
-    }
-
-    // Helper function to check authorization for modifications (create, update, delete)
-    // Enforces strict JWT validation - no bypass mode
-    function requireAuthForModification($action, $table) {
-        global $conn;
-
-        // Get token from Authorization header
-        $auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
-        $token = null;
-
-        if ($auth_header && preg_match('/Bearer\s+(\S+)/', $auth_header, $matches)) {
-            $token = $matches[1];
-        }
-
-        // Fallback to POST data for compatibility
-        if (!$token) {
-            $token = $_POST['token'] ?? null;
-        }
-
-        // If no token provided, deny the operation
-        if (!$token) {
-            http_response_code(401);
-            error_log("🔴 [AUTH] $action on $table - No token provided (DENIED)");
-            error_log("📋 [DEBUG] Authorization header present: " . ($auth_header ? "yes" : "no"));
-            throw new Exception("Authentication required. Missing authorization token.");
-        }
-
-        // Try to verify token first (strict validation)
-        $decoded = verifyJWT($token);
-
-        // If strict verification failed, try to decode without signature verification
-        // This allows users with valid identity but expired/invalid JWT to proceed if they're admin
-        if (!$decoded) {
-            error_log("🟡 [AUTH] $action on $table - JWT verification failed, attempting lenient decode...");
-            $parts = explode('.', $token);
-            if (count($parts) === 3) {
-                try {
-                    // Decode payload without verifying signature
-                    $decoded = json_decode(base64_decode($parts[1]), true);
-                    if ($decoded) {
-                        error_log("🟡 [AUTH] Successfully extracted identity from invalid JWT (lenient mode)");
-                    }
-                } catch (Exception $e) {
-                    $decoded = null;
-                }
-            }
-        }
-
-        // Token validation failed - deny the operation
-        if (!$decoded) {
-            http_response_code(401);
-            error_log("🔴 [AUTH] $action on $table - Could not extract or verify token (DENIED)");
-            throw new Exception("Invalid or expired authentication token");
-        }
-
-        // Get user ID from decoded token
-        $user_id = $decoded['id'] ?? $decoded['sub'] ?? null;
-        if (!$user_id) {
-            http_response_code(401);
-            error_log("🔴 [AUTH] $action on $table - No user ID in token (DENIED)");
-            throw new Exception("Invalid token - no user ID");
-        }
-
-        // Get full user info from database to check status and company_id
-        $sql = "SELECT id, email, role, status, company_id FROM profiles WHERE id = ? LIMIT 1";
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            http_response_code(500);
-            throw new Exception("Database error: " . $conn->error);
-        }
-
-        $stmt->bind_param("s", $user_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-        $stmt->close();
-
-        if (!$user) {
-            http_response_code(401);
-            error_log("🔴 [AUTH] $action on $table - User not found in profiles (DENIED) - user_id: $user_id");
-            throw new Exception("User not found");
-        }
-
-        // Check if user is active
-        if ($user['status'] !== 'active') {
-            http_response_code(403);
-            error_log("🔴 [AUTH] $action on $table - User is not active (status: {$user['status']}) - email: {$user['email']} (DENIED)");
-            throw new Exception("User account is not active. Status: " . $user['status']);
-        }
-
-        // Check if user is admin
-        $is_admin = stripos($user['role'], 'admin') !== false || $user['role'] === 'super_admin';
-        if (!$is_admin) {
-            http_response_code(403);
-            error_log("🔴 [AUTH] $action on $table - User is not admin (role: {$user['role']}) - email: {$user['email']} (DENIED)");
-            throw new Exception("Insufficient permissions. User role must be admin to perform $action.");
-        }
-
-        error_log("✅ [AUTH] $action on $table - Authorization passed for user {$user['email']} (role: {$user['role']}, status: {$user['status']})");
-        return $user;
-    }
-
-    /**
-     * Check if user can manage a specific company
-     * Used for company-specific authorization checks
-     */
-    function canManageCompany($user, $company_id) {
-        global $conn;
-
-        // Super admins can manage any company
-        if ($user['role'] === 'super_admin') {
-            error_log("✅ [AUTH] Super admin {$user['email']} can manage any company");
-            return true;
-        }
-
-        // Regular admins can only manage their own company
-        // Cast both to string to handle type differences from URL parameters vs database
-        $user_company_id = (string)$user['company_id'];
-        $target_company_id = (string)$company_id;
-
-        error_log("🔍 [AUTH] Checking company access: user_company={$user_company_id}, target_company={$target_company_id}, user_role={$user['role']}");
-
-        if ($user_company_id === $target_company_id) {
-            error_log("✅ [AUTH] User {$user['email']} can manage company {$company_id} (match)");
-            return true;
-        }
-
-        error_log("🔴 [AUTH] User {$user['email']} cannot manage company $company_id (user's company: {$user['company_id']}, role: {$user['role']})");
-        return false;
     }
 
     // Authentication
@@ -1662,7 +1672,8 @@ try {
         }
 
         // Check authorization for modifications to protected tables
-        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles'];
+        // web_* tables: website content (categories/variants/images) - admin only
+        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images'];
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
         }
@@ -1987,7 +1998,8 @@ try {
         }
 
         // Check authorization for modifications to protected tables
-        $protected_tables = ['users', 'profiles', 'user_permissions', 'roles', 'companies'];
+        // web_* tables: website content - admin only
+        $protected_tables = ['users', 'profiles', 'user_permissions', 'roles', 'companies', 'web_categories', 'web_variants', 'variant_images'];
         $auth = null;
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
@@ -2233,7 +2245,8 @@ try {
         }
 
         // Check authorization for modifications to protected tables
-        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles'];
+        // web_* tables: website content - admin only
+        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images'];
         $auth = null;
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
@@ -2305,7 +2318,7 @@ try {
         }
 
         // Check authorization for modifications to protected tables
-        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles'];
+        $protected_tables = ['companies', 'users', 'profiles', 'user_permissions', 'roles', 'web_categories', 'web_variants', 'variant_images'];
         if (in_array($table, $protected_tables)) {
             $auth = requireAuthForModification($action, $table);
         }
@@ -3200,6 +3213,10 @@ try {
             // Marketing data only, no customer PII
             'invoices' => ['id', 'invoice_number', 'invoice_date', 'subtotal', 'tax_amount', 'total_amount', 'status', 'created_at'],
             'invoice_items' => ['id', 'invoice_id', 'product_id', 'description', 'quantity', 'unit_price', 'line_total'],
+            // Public website categories/variants (Laboratory / Imaging etc.)
+            'web_categories' => ['id', 'name', 'slug', 'icon', 'description', 'image_path', 'display_order', 'is_active', 'created_at', 'updated_at'],
+            'web_variants' => ['id', 'category_id', 'name', 'sku', 'slug', 'description', 'image_path', 'display_order', 'is_active', 'created_at', 'updated_at'],
+            'variant_images' => ['id', 'variant_id', 'image_url', 'alt_text', 'display_order', 'created_at'],
         ];
         if (!isset($public_tables[$table])) {
             http_response_code(403);
@@ -3291,15 +3308,8 @@ try {
     // the uploads directory to prevent path traversal.
     // ================================================================
     elseif ($action === "delete_file") {
-        $del_auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? null;
-        $del_token = null;
-        if ($del_auth_header && preg_match('/Bearer\s+(\S+)/', $del_auth_header, $del_matches)) {
-            $del_token = $del_matches[1];
-        }
-        if (!$del_token || !verifyJWT($del_token)) {
-            http_response_code(401);
-            throw new Exception("Authentication required");
-        }
+        // Admin-only: uploads are shared public assets (branding, website images)
+        requireAuthForModification($action, 'delete_file');
         $del_path = $data['path'] ?? null;
         if (!$del_path || !is_string($del_path)) {
             http_response_code(400);

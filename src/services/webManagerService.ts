@@ -6,7 +6,9 @@ export interface WebCategoryForPublic {
   slug: string;
   icon?: string;
   description?: string;
+  image_path?: string;
   display_order: number;
+  is_active?: boolean;
   variant_count?: number;
 }
 
@@ -19,20 +21,46 @@ export interface WebVariantForPublic {
   description?: string;
   image_path?: string;
   display_order: number;
+  is_active?: boolean;
 }
 
 /**
- * Fetch all active categories for public display
+ * All public website reads go through the `public_read` action
+ * (isPublic = true), which enforces a server-side allow-list of
+ * tables and columns and needs no auth token.
+ */
+async function publicRead<T>(
+  table: string,
+  filter: Record<string, unknown> = {}
+): Promise<T[]> {
+  const { data, error } = await apiClient.select<T>(table, filter, true);
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+const byDisplayOrder = (a: { display_order?: number }, b: { display_order?: number }) =>
+  (a.display_order || 0) - (b.display_order || 0);
+
+/**
+ * Fetch all active categories for public display, with the number of
+ * active variants each one has (computed client-side - the old
+ * `web_categories_with_counts` view does not exist on the live DB).
  */
 export const getActiveCategories = async (): Promise<WebCategoryForPublic[]> => {
   try {
-    const { data, error } = await apiClient.query('web_categories_with_counts')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true })
-      .execute();
+    const [categories, variants] = await Promise.all([
+      publicRead<WebCategoryForPublic>('web_categories', { is_active: true }),
+      publicRead<WebVariantForPublic>('web_variants', { is_active: true }),
+    ]);
 
-    if (error) throw error;
-    return (Array.isArray(data) ? data : []) || [];
+    const counts: Record<string, number> = {};
+    for (const v of variants) {
+      counts[v.category_id] = (counts[v.category_id] || 0) + 1;
+    }
+
+    return categories
+      .map((c) => ({ ...c, variant_count: counts[c.id] || 0 }))
+      .sort(byDisplayOrder);
   } catch (error) {
     console.error('Error fetching active categories:', error);
     return [];
@@ -49,32 +77,21 @@ export const getCategoryBySlugWithVariants = async (
   variants: WebVariantForPublic[];
 } | null> => {
   try {
-    // Fetch category
-    const { data: categoryData, error: categoryError } = await apiClient.query('web_categories')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
+    const categories = await publicRead<WebCategoryForPublic>('web_categories', {
+      slug,
+      is_active: true,
+    });
+    const category = categories[0];
+    if (!category) return null;
 
-    if (categoryError) {
-      throw categoryError;
-    }
-
-    // Fetch variants for this category
-    let variants: WebVariantForPublic[] = [];
-    if (categoryData) {
-      const { data: variantsData, error: variantsError } = await apiClient.query('web_variants')
-        .eq('category_id', categoryData.id)
-        .eq('is_active', true)
-        .order('display_order', { ascending: true })
-        .execute();
-
-      if (variantsError) throw variantsError;
-      variants = (Array.isArray(variantsData) ? variantsData : []) || [];
-    }
+    const variants = await publicRead<WebVariantForPublic>('web_variants', {
+      category_id: category.id,
+      is_active: true,
+    });
 
     return {
-      category: categoryData || undefined,
-      variants,
+      category,
+      variants: variants.sort(byDisplayOrder),
     };
   } catch (error) {
     console.error('Error fetching category with variants:', error);
@@ -89,18 +106,11 @@ export const getActiveVariants = async (
   categoryId?: string
 ): Promise<WebVariantForPublic[]> => {
   try {
-    let query = apiClient.query('web_variants')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true });
+    const filter: Record<string, unknown> = { is_active: true };
+    if (categoryId) filter.category_id = categoryId;
 
-    if (categoryId) {
-      query = query.eq('category_id', categoryId);
-    }
-
-    const { data, error } = await query.execute();
-
-    if (error) throw error;
-    return (Array.isArray(data) ? data : []) || [];
+    const variants = await publicRead<WebVariantForPublic>('web_variants', filter);
+    return variants.sort(byDisplayOrder);
   } catch (error) {
     console.error('Error fetching active variants:', error);
     return [];
@@ -112,16 +122,11 @@ export const getActiveVariants = async (
  */
 export const getVariantBySlug = async (slug: string): Promise<WebVariantForPublic | null> => {
   try {
-    const { data, error } = await apiClient.query('web_variants')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return data || null;
+    const variants = await publicRead<WebVariantForPublic>('web_variants', {
+      slug,
+      is_active: true,
+    });
+    return variants[0] || null;
   } catch (error) {
     console.error('Error fetching variant by slug:', error);
     return null;
@@ -133,13 +138,10 @@ export const getVariantBySlug = async (slug: string): Promise<WebVariantForPubli
  */
 export const getCategoryNames = async (): Promise<string[]> => {
   try {
-    const { data, error } = await apiClient.query('web_categories')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true })
-      .execute();
-
-    if (error) throw error;
-    return (Array.isArray(data) ? data.map((cat: any) => cat.name) : []) || [];
+    const categories = await publicRead<WebCategoryForPublic>('web_categories', {
+      is_active: true,
+    });
+    return categories.sort(byDisplayOrder).map((cat) => cat.name);
   } catch (error) {
     console.error('Error fetching category names:', error);
     return [];

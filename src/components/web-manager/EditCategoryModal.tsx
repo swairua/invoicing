@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
+import { CategoryImageUpload } from './CategoryImageUpload';
 
 interface EditCategoryModalProps {
   open: boolean;
@@ -49,6 +50,7 @@ export const EditCategoryModal = ({
         description: category.description || '',
         display_order: category.display_order,
         is_active: category.is_active,
+        image_path: category.image_path || '',
       });
     }
   }, [category, open]);
@@ -112,6 +114,13 @@ export const EditCategoryModal = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <CategoryImageUpload
+              value={formData.image_path || ''}
+              onChange={(image_path) => setFormData((prev) => ({ ...prev, image_path }))}
+            />
           </div>
 
           <div className="space-y-2">

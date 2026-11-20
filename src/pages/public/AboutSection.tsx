@@ -32,6 +32,7 @@ function valueIcon(icon: string) {
 
 export function AboutSection() {
   const company = useCompanyConfig();
+  const brand = company.name || 'Diag Solutions Ltd';
 
   return (
     <section id="about" className="py-16 sm:py-24 bg-white">
@@ -40,12 +41,12 @@ export function AboutSection() {
 <div className="space-y-6">
               <SectionBadge>About us</SectionBadge>
               <h2 className="text-3xl font-bold text-slate-900">
-                Haemonetics East Africa Limited
+                {brand}
               </h2>
               <div className="space-y-4 text-slate-600">
                 <p>
                   <strong className="text-slate-800">Founded 2013</strong> in
-                  Kenya, HEAL operates in the Medical, Research, Production,
+                  Kenya, {brand} operates in the Medical, Research, Production,
                   Food &amp; Beverage, and QC Sectors — a supplier of laboratory
                   reagents and instrumentation to research institutes,
                   hospitals, universities, technological institutes, veterinary
@@ -60,7 +61,7 @@ export function AboutSection() {
                   the laboratory supply business today.
                 </p>
                 <p>
-                  HEAL's policy is simply to be <em>"Brilliant by Design"</em> —
+                  {brand}'s policy is simply to be <em>"Brilliant by Design"</em> —
                   to be the automatic supplier of first choice by providing the
                   best products and a personal service.
                 </p>
@@ -90,8 +91,10 @@ export function AboutSection() {
                   Registered address
                 </h3>
                 <address className="not-italic text-slate-600 space-y-1">
-                  <p>Naivasha Road, Kamrose Plaza, 1st Flr, Rm 14</p>
-                  <p>P.O. Box 61214-00200, Nairobi, Kenya</p>
+                  <p>{company.address || 'Naivasha Road, Kamrose Plaza, 1st Flr, Rm 14'}</p>
+                  <p>
+                    P.O. Box 61214-00200, {company.city || 'Nairobi'}, {company.country || 'Kenya'}
+                  </p>
                 </address>
               </CardContent>
             </Card>
@@ -103,11 +106,11 @@ export function AboutSection() {
                 </h3>
                 <div className="space-y-2 text-slate-600">
                   <p className="flex items-center gap-2">
-                    <span>Tel:</span> +254 207 863 782 / +254 721 697 123
+                    <span>Tel:</span> {company.phone || '+254 180 274401'}
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail className="h-4 w-4" />
-                    sales@heal.co.ke / info@heal.co.ke
+                    {company.email || 'info@diagsolutionsltd.com'}
                   </p>
                 </div>
               </CardContent>

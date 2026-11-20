@@ -11,6 +11,10 @@ import { routePermissionMap } from "@/constants/routePermissions";
 import Index from "./pages/Index";
 import PublicSite from "./pages/public/PublicSite";
 import PublicProducts from "./pages/public/PublicProducts";
+import PublicCategories from "./pages/PublicCategories";
+import ProductDetail from "./pages/ProductDetail";
+import AboutUs from "./pages/AboutUs";
+import Contact from "./pages/Contact";
 import Quotations from "./pages/Quotations";
 import Invoices from "./pages/Invoices";
 import DirectReceipts from "./pages/DirectReceipts";
@@ -87,12 +91,16 @@ const App = () => {
         <Route path="/login" element={<Login />} />
 
         {/* Public website routes - no auth, no app Layout */}
-        {/* Landing page switched off for now: "/" shows login instead.
-            Reactivate later by restoring: <Route path="/" element={<PublicSite />} />
-            and removing the /home alias below. */}
+        {/* Landing page lives at /home (reactivate "/" later by restoring:
+            <Route path="/" element={<PublicSite />} /> + removing the new root route below). */}
         <Route path="/home" element={<PublicSite />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Public website at "/": two-category entry (Laboratory / Imaging).
+            Category pages live at /products/:slug (ProductDetail). */}
+        <Route path="/" element={<PublicCategories />} />
         <Route path="/products" element={<PublicProducts />} />
+        <Route path="/products/:productSlug" element={<ProductDetail />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/contact" element={<Contact />} />
 
         {/* All other routes wrapped in Layout */}
         <Route

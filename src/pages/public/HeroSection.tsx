@@ -23,8 +23,8 @@ export function HeroSection({ stats }: { stats: PublicStats | undefined }) {
               {company.name || 'Haemonetics East Africa Limited'}
             </h1>
             <p className="text-lg text-slate-600">
-              Your trusted partner for laboratory reagents, instrumentation and
-              diagnostic supplies across Kenya and the wider East African region.
+              {company.description ||
+                'Your trusted partner for laboratory reagents, instrumentation and diagnostic supplies across Kenya and the wider East African region.'}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
@@ -67,17 +67,19 @@ export function StatsBand({ stats }: { stats: PublicStats | undefined }) {
 }
 
 export function IntroStrip() {
+  const company = useCompanyConfig();
   return (
     <section className="py-12 bg-white border-y border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionBadge>Who we are</SectionBadge>
         <p className="mt-3 max-w-4xl text-slate-600">
-          Haemonetics East Africa Limited operates in the Medical, Research,
-          Production, Food and Beverage and QC sectors. Founded in Kenya in
-          2013, we are essentially a supplier of laboratory reagents and
-          instrumentation to research institutes, hospitals, universities,
-          technological institutes, veterinary practices, industrial and
-          pharmaceutical companies throughout East Africa.
+          {company.description ||
+            `${company.name || 'Haemonetics East Africa Limited'} operates in the Medical, Research,
+            Production, Food and Beverage and QC sectors. Founded in Kenya in
+            2013, we are essentially a supplier of laboratory reagents and
+            instrumentation to research institutes, hospitals, universities,
+            technological institutes, veterinary practices, industrial and
+            pharmaceutical companies throughout East Africa.`}
         </p>
       </div>
     </section>

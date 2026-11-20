@@ -25,7 +25,8 @@ import {
   TrendingDown,
   Image as ImageIcon,
   LogOut,
-  QrCode
+  QrCode,
+  Globe2
 } from 'lucide-react';
 import { BiolegendLogo } from '@/components/ui/biolegend-logo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -126,7 +127,8 @@ const sidebarItems: SidebarItem[] = [
       { title: 'Company Settings', icon: Building2, href: '/app/settings/company' },
       { title: 'User Management', icon: Users, href: '/app/settings/users' },
       { title: 'Payment Methods', icon: Banknote, href: '/app/settings/payment-methods' },
-      { title: 'Database & Roles', icon: Database, href: '/app/settings/database-roles' }
+      { title: 'Database & Roles', icon: Database, href: '/app/settings/database-roles' },
+      { title: 'Web Manager', icon: Globe2, href: '/app/web-manager' }
     ]
   },
   {

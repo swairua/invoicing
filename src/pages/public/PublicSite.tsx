@@ -73,16 +73,14 @@ export default function PublicSite() {
               <Phone className="h-6 w-6 text-maroon" />
               <div>
                 <p className="font-semibold text-white">Phone</p>
-                <p className="text-slate-300">+254 207 863 782</p>
-                <p className="text-slate-400">+254 721 697 123</p>
+                <p className="text-slate-300">{company.phone || '+254 207 863 782'}</p>
               </div>
             </div>
             <div className="flex flex-col items-center gap-3">
               <Mail className="h-6 w-6 text-maroon" />
               <div>
                 <p className="font-semibold text-white">Email</p>
-                <p className="text-slate-300">sales@heal.co.ke</p>
-                <p className="text-slate-400">info@heal.co.ke</p>
+                <p className="text-slate-300">{company.email || 'sales@heal.co.ke'}</p>
               </div>
             </div>
             <div className="flex flex-col items-center gap-3">
@@ -90,7 +88,9 @@ export default function PublicSite() {
               <div>
                 <p className="font-semibold text-white">Address</p>
                 <p className="text-slate-300">
-                  Naivasha Road, Kamrose Plaza, 1st Flr, Rm 14, Nairobi
+                  {company.address || 'Naivasha Road, Kamrose Plaza, 1st Flr, Rm 14'}
+                  {company.city && `, ${company.city}`}
+                  {company.country && ` (${company.country})`}
                 </p>
               </div>
             </div>
@@ -102,7 +102,7 @@ export default function PublicSite() {
               size="lg"
               className="bg-maroon hover:bg-maroon/dark text-white"
             >
-              <a href="mailto:sales@heal.co.ke">Request a quote</a>
+              <a href={`mailto:${company.email || 'sales@heal.co.ke'}`}>Request a quote</a>
             </Button>
           </div>
         </div>

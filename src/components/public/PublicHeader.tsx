@@ -4,15 +4,14 @@ import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCompanyConfig } from '@/hooks/useCompanyConfig';
 
-// The landing page is temporarily served at /home ("/" redirects to login).
-// When the landing page is reactivated at "/", change these back to "/" + "/#...".
+// Nav routes for the public website (home = "/" = PublicCategories).
 const NAV = [
-  { label: 'Home', href: '/home' },
-  { label: 'About', href: '/home#about' },
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about-us' },
   { label: 'Products', href: '/products' },
   { label: 'Why Haemonetics', href: '/home#why' },
   { label: 'Team', href: '/home#team' },
-  { label: 'Contact', href: '/home#contact' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export function PublicHeader() {
@@ -23,7 +22,7 @@ export function PublicHeader() {
     <header className="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 sm:h-20 items-center justify-between">
-          <Link to="/home" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3">
             {company.logo_url ? (
               <img
                 src={company.logo_url}

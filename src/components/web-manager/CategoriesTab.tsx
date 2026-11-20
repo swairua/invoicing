@@ -98,6 +98,7 @@ export const CategoriesTab = () => {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Icon</TableHead>
+              <TableHead>Image</TableHead>
               <TableHead>Variants</TableHead>
               <TableHead>Order</TableHead>
               <TableHead>Status</TableHead>
@@ -107,13 +108,13 @@ export const CategoriesTab = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : categories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No categories found
                 </TableCell>
               </TableRow>
@@ -122,6 +123,17 @@ export const CategoriesTab = () => {
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell className="text-xl">{category.icon}</TableCell>
+                  <TableCell>
+                    {category.image_path ? (
+                      <img
+                        src={category.image_path}
+                        alt={category.name}
+                        className="h-10 w-16 rounded object-cover border border-gray-200"
+                      />
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>{category.variant_count || 0}</TableCell>
                   <TableCell>{category.display_order}</TableCell>
                   <TableCell>
